@@ -113,8 +113,6 @@ def connect_wallet():
 
     c = db()
     now = int(time.time())
-    usdt_price = NYD_USDT_PRICE
-    usdt_amount = amount * usdt_price
 
     c.execute("""
         INSERT INTO wallets (telegram_id, wallet_address, network, connected_at)
@@ -262,20 +260,21 @@ def withdraw():
 def withdrawal_history():
     uid = request.args.get("telegram_id")
     if not uid:
-        return jsonify({"error": "telegram_id required"}), 400
+        return jsonify({"error":"telegram_id required"}),400
 
-    c = db()
-    rows = c.execute("""
-        SELECT id, amount, wallet_address, network, status,
+    c=db()
+    rows=c.execute("""
+        SELECT id, amount, burn_nyd,
+               (amount - burn_nyd) AS payout_nyd,
+               wallet_address, network, status,
                created_at, usdt_price, usdt_amount, processed_at
         FROM withdrawals
         WHERE telegram_id=?
         ORDER BY id DESC
-    """, (int(uid),)).fetchall()
+    """,(int(uid),)).fetchall()
     c.close()
 
-    return jsonify({"withdrawals": [dict(row) for row in rows]})
-
+    return jsonify({"withdrawals":[dict(r) for r in rows]})
 
 @app.get("/api/admin/withdrawals")
 def admin_withdrawals():
@@ -346,4 +345,139 @@ def nyd_price():
         "symbol": "NYD/USDT",
         "price": price,
         "example_500_nyd": round(500 * price, 8)
+    })
+
+
+
+@app.get("/api/tasks")
+def get_tasks():
+    c=db()
+    rows=c.execute(
+        "SELECT id,title,reward,active FROM tasks WHERE active=1 ORDER BY id"
+    ).fetchall()
+    c.close()
+    return jsonify({"tasks":[dict(r) for r in rows]})
+
+
+@app.post("/api/tasks/verify")
+def verify_task():
+    data=request.get_json(force=True)
+    uid=int(data["telegram_id"])
+    task_id=int(data["task_id"])
+
+    import os, requests
+
+    token=os.getenv("BOT_TOKEN")
+    if not token:
+        try:
+            token=open(".env").read().split("=",1)[1].strip()
+        except Exception:
+            return jsonify({"error":"BOT_TOKEN not configured"}),500
+
+    c=db()
+
+    # Wallet is mandatory before verification/reward
+    wallet=c.execute(
+        "SELECT wallet_address,network FROM wallets WHERE telegram_id=?",
+        (uid,)
+    ).fetchone()
+
+    if not wallet:
+        c.close()
+        return jsonify({
+            "verified":False,
+            "error":"Connect wallet first"
+        }),400
+
+    task=c.execute(
+        "SELECT id,title FROM tasks WHERE id=? AND active=1",
+        (task_id,)
+    ).fetchone()
+
+    if not task:
+        c.close()
+        return jsonify({"error":"Task not found"}),404
+
+    chat_id=-1004434058291 if task_id==1 else "@NYDEarn_Official"
+
+    try:
+        r=requests.get(
+            f"https://api.telegram.org/bot{token}/getChatMember",
+            params={"chat_id":chat_id,"user_id":uid},
+            timeout=10
+        )
+        result=r.json()
+    except Exception:
+        c.close()
+        return jsonify({"error":"Telegram membership check failed"}),502
+
+    if not result.get("ok"):
+        c.close()
+        return jsonify({
+            "error":"Telegram membership check failed"
+        }),400
+
+    status=result["result"]["status"]
+
+    if status not in ("member","administrator","creator"):
+        c.close()
+        return jsonify({
+            "verified":False,
+            "error":"Join the required Telegram group/channel first"
+        }),403
+
+    now=int(time.time())
+
+    existing=c.execute(
+        "SELECT completed_at FROM task_completions WHERE telegram_id=? AND task_id=?",
+        (uid,task_id)
+    ).fetchone()
+
+    if existing and now-int(existing["completed_at"])<7200:
+        remaining=7200-(now-int(existing["completed_at"]))
+        c.close()
+        return jsonify({
+            "verified":True,
+            "reward":0,
+            "remaining_seconds":remaining,
+            "message":"Task cooldown active"
+        })
+
+    first_claim=c.execute(
+        "SELECT COUNT(*) AS n FROM task_completions WHERE telegram_id=?",
+        (uid,)
+    ).fetchone()["n"]==0
+
+    reward=200.0 if first_claim else 100.0
+
+    if existing:
+        c.execute(
+            "UPDATE task_completions SET completed_at=? WHERE telegram_id=? AND task_id=?",
+            (now,uid,task_id)
+        )
+    else:
+        c.execute(
+            "INSERT INTO task_completions(telegram_id,task_id,completed_at) VALUES(?,?,?)",
+            (uid,task_id,now)
+        )
+
+    c.execute(
+        "UPDATE users SET balance=balance+? WHERE telegram_id=?",
+        (reward,uid)
+    )
+
+    c.commit()
+
+    balance=c.execute(
+        "SELECT balance FROM users WHERE telegram_id=?",
+        (uid,)
+    ).fetchone()["balance"]
+
+    c.close()
+
+    return jsonify({
+        "verified":True,
+        "reward":reward,
+        "balance":round(balance,8),
+        "message":"Task verified and reward added"
     })

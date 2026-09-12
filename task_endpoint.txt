@@ -1,0 +1,56 @@
+@app.post("/api/tasks/claim")
+def claim_task():
+    data = request.get_json(force=True)
+    uid = int(data["telegram_id"])
+    task_id = int(data["task_id"])
+    c = db()
+
+    user = c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (uid,)).fetchone()
+    task = c.execute("SELECT id, title FROM tasks WHERE id=? AND active=1", (task_id,)).fetchone()
+
+    if not user:
+        c.close()
+        return jsonify({"error": "User not found"}), 404
+    if not task:
+        c.close()
+        return jsonify({"error": "Task not found"}), 404
+
+    now = int(time.time())
+    last = c.execute(
+        "SELECT completed_at FROM task_completions WHERE telegram_id=? AND task_id=? ORDER BY completed_at DESC LIMIT 1",
+        (uid, task_id)
+    ).fetchone()
+
+    if last:
+        cooldown = 7200
+        elapsed = now - int(last["completed_at"])
+        if elapsed < cooldown:
+            c.close()
+            return jsonify({
+                "error": "Task is on cooldown",
+                "remaining_seconds": cooldown - elapsed,
+                "next_claim_at": int(last["completed_at"]) + cooldown
+            }), 429
+        reward = 100.0
+    else:
+        reward = 200.0
+
+    c.execute("UPDATE users SET balance=balance+? WHERE telegram_id=?", (reward, uid))
+    c.execute(
+        "INSERT INTO task_completions (telegram_id, task_id, completed_at) VALUES (?, ?, ?)",
+        (uid, task_id, now)
+    )
+    c.commit()
+
+    balance = c.execute(
+        "SELECT balance FROM users WHERE telegram_id=?", (uid,)
+    ).fetchone()["balance"]
+    c.close()
+
+    return jsonify({
+        "ok": True,
+        "task_id": task_id,
+        "reward": reward,
+        "balance": round(balance, 8),
+        "next_claim_at": now + 7200
+    })

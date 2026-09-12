@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NayaDost Mining</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #020817;
+  color: #fff;
+}
+
+.app {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: auto;
+  background:
+    radial-gradient(circle at 50% 35%, #063b75 0, #03152d 30%, #020817 65%);
+  overflow: hidden;
+}
+
+.header {
+  height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid #12345c;
+  background: rgba(2,10,25,.85);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#8b5cff,#00d9ff);
+  display: grid;
+  place-items: center;
+  font-weight: bold;
+  box-shadow: 0 0 18px #008cff;
+}
+
+.brand h2 {
+  font-size: 16px;
+}
+
+.brand small {
+  color: #a9bfdc;
+  font-size: 10px;
+}
+
+.card {
+  margin: 10px 12px;
+  padding: 14px;
+  border-radius: 15px;
+  border: 1px solid #14518c;
+  background: linear-gradient(145deg,#09294b,#04182f);
+  box-shadow: 0 5px 20px rgba(0,100,255,.12);
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#ffd36b,#693cff);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+.username {
+  font-weight: bold;
+}
+
+.tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: #0c815d;
+  font-size: 10px;
+}
+
+.balance {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.coin {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle,#ffe76a,#ff9900);
+  color: #7a3500;
+  font-size: 24px;
+}
+
+.balance h1 {
+  font-size: 25px;
+}
+
+.green {
+  color: #00e88b;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.stat {
+  padding: 9px 4px;
+  background: rgba(0,50,100,.45);
+  border-radius: 10px;
+}
+
+.stat strong {
+  display: block;
+  color: #fff;
+}
+
+.stat span {
+  color: #83a6ca;
+  font-size: 10px;
+}
+
+.mine-area {
+  text-align: center;
+  padding: 25px 10px;
+}
+
+.mine-button {
+  width: 210px;
+  height: 210px;
+  margin: 10px auto 20px;
+  border-radius: 50%;
+  border: 8px solid #087fff;
+  background:
+    radial-gradient(circle,#19c8ff 0,#0753bb 35%,#021e49 70%);
+  box-shadow:
+    0 0 30px #008cff,
+    inset 0 0 35px #00d9ff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: .15s;
+}
+
+.mine-button:active {
+  transform: scale(.94);
+}
+
+.pickaxe {
+  font-size: 58px;
+}
+
+.mine-button span {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+}
+
+.primary {
+  width: 100%;
+  padding: 13px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  background: linear-gradient(90deg,#087fff,#00d9ff);
+  cursor: pointer;
+}
+
+.reward {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px;
+  margin: 9px 0;
+  border-radius: 12px;
+  background: #082746;
+  border: 1px solid #144e80;
+}
+
+.reward-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #00a9ff;
+  display: grid;
+  place-items: center;
+}
+
+.reward-info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.reward-info strong {
+  display: block;
+  font-size: 13px;
+}
+
+.reward-info small {
+  color: #7ea1c6;
+}
+
+.go {
+  background: #087fff;
+  color: white;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 9px 4px;
+  border: 0;
+  border-radius: 10px;
+  color: #b9cde4;
+  background: #08233e;
+}
+
+.tabs button.active {
+  color: white;
+  background: #0789ff;
+}
+
+.chart {
+  height: 160px;
+  border-radius: 12px;
+  background:
+    linear-gradient(transparent 95%,#164b71 96%),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 30px,
+      rgba(50,130,200,.12) 31px
+    );
+  position: relative;
+  overflow: hidden;
+}
+
+.chart svg {
+  width: 100%;
+  height: 100%;
+}
+
+.upgrade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px;
+  border-radius: 12px;
+  background: #092945;
+  margin-bottom: 8px;
+  border: 1px solid #174b72;
+}
+
+.locked {
+  color: #7188a0;
+}
+
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  height: 70px;
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  background: #031224;
+  border-top: 1px solid #16466e;
+}
+
+.nav-item {
+  border: 0;
+  color: #7895b4;
+  background: transparent;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.nav-item span {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.nav-item.active {
+  color: #00aaff;
+}
+
+.screen {
+  display: none;
+  padding-bottom: 75px;
+}
+
+.screen.active {
+  display: block;
+}
+
+.title {
+  padding: 15px 14px 5px;
+}
+
+.title h2 {
+  font-size: 20px;
+}
+
+.title p {
+  color: #7898b9;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.green-button {
+  background: #09d993;
+  color: #001b13;
+  border: 0;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-weight: bold;
+}
+
+.referral {
+  text-align: center;
+}
+
+.referral-code {
+  background: #07182c;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 10px;
+  color: #4bb8ff;
+  word-break: break-all;
+}
+
+@media (min-width: 600px) {
+  body {
+    padding: 20px;
+  }
+
+  .app {
+    border-radius: 25px;
+    min-height: 850px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header class="header">
+  <div class="brand">
+    <div class="logo">ND</div>
+    <div>
+      <h2>NayaDost Mining ✓</h2>
+      <small>Tap · Mine · Grow Together</small>
+    </div>
+  </div>
+  <div>⋮</div>
+</header>
+
+<!-- HOME -->
+<section id="home" class="screen active">
+
+  <div class="card profile">
+    <div class="avatar">👨🏻</div>
+    <div>
+      <div class="username">Sailesh Giri</div>
+      <small>@SaileshGiri</small>
+    </div>
+    <span class="tag">♟ Beginner</span>
+  </div>
+
+  <div class="card balance">
+    <div class="coin">₦</div>
+    <div>
+      <small>Your Balance</small>
+      <h1 id="balance">1,250 NYD</h1>
+      <small class="green">+0.01/h</small>
+    </div>
+  </div>
+
+  <div class="card stats">
+    <div class="stat">
+      <strong>1,248</strong>
+      <span>Total Taps</span>
+    </div>
+    <div class="stat">
+      <strong>12</strong>
+      <span>Referrals</span>
+    </div>
+    <div class="stat">
+      <strong>+1.25</strong>
+      <span>Today Earned</span>
+    </div>
+  </div>
+
+  <div class="mine-area">
+    <div class="mine-button" onclick="mine()">
+      <div>
+        <div class="pickaxe">⛏️</div>
+        <span>Tap to Mine</span>
+        <span>(100 taps/day)</span>
+      </div>
+    </div>
+
+    <button class="primary" onclick="invite()">
+      🎁 Invite Friends — Get 50 NYD per successful referral
+    </button>
+  </div>
+
+</section>
+
+<!-- MINING -->
+<section id="mining" class="screen">
+
+  <div class="title">
+    <h2>⛏ Mining</h2>
+    <p>Complete tasks and earn NYD</p>
+  </div>
+
+  <div class="card">
+    <div class="reward">
+      <div class="reward-icon">⚡</div>
+      <div class="reward-info">
+        <strong>Daily Check-in</strong>
+        <small>+5 NYD</small>
+      </div>
+      <button class="go">Claim</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">📣</div>
+      <div class="reward-info">
+        <strong>Join NayaDost Telegram Channel</strong>
+        <small>+5 NYD</small>
+      </div>
+      <button class="go">Go</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">𝕏</div>
+      <div class="reward-info">
+        <strong>Follow on X</strong>
+        <small>+5 NYD</small>
+      </div>
+      <button class="go">Go</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- QUESTS -->
+<section id="quests" class="screen">
+
+  <div class="title">
+    <h2>Quests & Tasks</h2>
+    <p>Complete tasks, earn NYD, and get rewards!</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="active">All</button>
+      <button>Social</button>
+      <button>Telegram</button>
+      <button>Other</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">✈️</div>
+      <div class="reward-info">
+        <strong>Join NayaDost Telegram Channel</strong>
+        <small>+5 NYD</small>
+      </div>
+      <button class="go">Go</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">𝕏</div>
+      <div class="reward-info">
+        <strong>Follow on X (Twitter)</strong>
+        <small>+5 NYD</small>
+      </div>
+      <button class="go">Go</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">▶</div>
+      <div class="reward-info">
+        <strong>Watch 1 Video</strong>
+        <small>+10 NYD</small>
+      </div>
+      <button class="go">Go</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">👥</div>
+      <div class="reward-info">
+        <strong>Join Our Group</strong>
+        <small>+5 NYD</small>
+      </div>
+      <button class="go">Go</button>
+    </div>
+
+    <div class="reward">
+      <div class="reward-icon">👤</div>
+      <div class="reward-info">
+        <strong>Complete Profile</strong>
+        <small>+10 NYD</small>
+      </div>
+      <button class="green-button">Done</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>NayaDost Mining</title>
+
+<style>
+:root{
+  --bg:#010816;
+  --card:#06234a;
+  --card2:#082d59;
+  --border:#1263a0;
+  --blue:#168cff;
+  --cyan:#27d9ff;
+  --green:#0ee78b;
+  --yellow:#ffc400;
+  --purple:#725cff;
+  --text:#f4f9ff;
+  --muted:#8ca9ca;
+  --dark:#020c1c;
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html,body{
+  min-height:100%;
+  background:
+    radial-gradient(circle at 50% 0,#06346a 0,#020d1e 38%,#00050d 100%);
+  color:var(--text);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+button{
+  border:0;
+  color:white;
+  font:inherit;
+  cursor:pointer;
+}
+
+.app{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  margin:auto;
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(180deg,#03162e,#010b18 75%);
+  box-shadow:0 0 80px #000;
+}
+
+/* =========================
+   SCREENS
+========================= */
+
+.screen{
+  display:none;
+  min-height:100vh;
+  padding:12px 12px 92px;
+}
+
+.screen.active{
+  display:block;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header{
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.logo{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:12px;
+  font-weight:900;
+
+  background:
+    radial-gradient(circle,#39efff 0,#6130ff 45%,#08052d 72%);
+
+  border:2px solid #38d7ff;
+
+  box-shadow:
+    0 0 10px #008cff,
+    0 0 22px #004cff;
+}
+
+.brand-name{
+  font-size:12px;
+  font-weight:900;
+}
+
+.subtitle{
+  color:#86a7ca;
+  font-size:8px;
+  margin-top:1px;
+}
+
+.verified{
+  color:#32cfff;
+}
+
+.header-btn{
+  width:35px;
+  height:35px;
+  border-radius:11px;
+  background:#08264b;
+  border:1px solid #17547f;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.card{
+  background:
+    linear-gradient(145deg,#072b55,#041831);
+
+  border:1px solid #15598b;
+
+  border-radius:14px;
+
+  padding:11px;
+
+  margin-bottom:9px;
+
+  box-shadow:
+    inset 0 0 25px rgba(0,140,255,.035);
+}
+
+.card-title{
+  font-size:13px;
+  font-weight:900;
+}
+
+.small{
+  color:var(--muted);
+  font-size:9px;
+}
+
+.label{
+  color:#8eacce;
+  font-size:9px;
+}
+
+/* =========================
+   PROFILE
+========================= */
+
+.profile{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.avatar{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    linear-gradient(135deg,#ffd2b4,#fff);
+
+  border:2px solid #5de1ff;
+
+  color:#18204b;
+  font-size:22px;
+}
+
+.username{
+  font-size:12px;
+  font-weight:800;
+}
+
+.handle{
+  color:#8daace;
+  font-size:9px;
+}
+
+.badge{
+  margin-left:auto;
+  padding:5px 8px;
+  border-radius:9px;
+  background:#086f5e;
+  color:#baffeb;
+  font-size:8px;
+  font-weight:800;
+}
+
+/* =========================
+   BALANCE
+========================= */
+
+.balance{
+  margin-top:10px;
+  padding:11px;
+
+  display:flex;
+  align-items:center;
+  gap:9px;
+
+  border-radius:13px;
+
+  background:
+    linear-gradient(135deg,#073b79,#092967);
+
+  border:1px solid #1268bd;
+}
+
+.coin{
+  width:39px;
+  height:39px;
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    linear-gradient(#ffe047,#ff9900);
+
+  font-weight:900;
+  font-size:19px;
+
+  box-shadow:0 0 15px #ff9900;
+}
+
+.balance-number{
+  font-size:20px;
+  font-weight:900;
+}
+
+.green{
+  color:var(--green);
+}
+
+.wallet-icon{
+  margin-left:auto;
+
+  width:38px;
+  height:38px;
+
+  border-radius:10px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#5c5cf5;
+}
+
+/* =========================
+   STATS
+========================= */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-top:7px;
+}
+
+.stat{
+  background:#061b38;
+  border:1px solid #104a78;
+  border-radius:10px;
+  text-align:center;
+  padding:7px 3px;
+}
+
+.stat strong{
+  display:block;
+  font-size:11px;
+}
+
+.stat span{
+  color:#83a3c7;
+  font-size:8px;
+}
+
+/* =========================
+   MINING
+========================= */
+
+.mine-box{
+  text-align:center;
+
+  border-radius:17px;
+
+  padding:15px 10px;
+
+  margin-bottom:9px;
+
+  background:
+    radial-gradient(circle at center,
+      #11549d 0,
+      #061f48 38%,
+      #031124 73%);
+
+  border:1px solid #1872b9;
+
+  overflow:hidden;
+}
+
+.mine-circle{
+  width:185px;
+  height:185px;
+
+  margin:0 auto 8px;
+
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    radial-gradient(circle,
+      #19eaff 0,
+      #0789f2 22%,
+      #071e62 52%,
+      transparent 70%);
+
+  box-shadow:
+    0 0 18px #008cff,
+    0 0 55px rgba(0,153,255,.45);
+}
+
+.pickaxe{
+  width:82px;
+  height:82px;
+
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#08295c;
+
+  border:2px solid #36dfff;
+
+  font-size:38px;
+
+  box-shadow:0 0 20px #00baff;
+}
+
+.mine-title{
+  font-size:16px;
+  font-weight:900;
+}
+
+.primary{
+  margin-top:10px;
+
+  padding:10px 15px;
+
+  border-radius:11px;
+
+  background:
+    linear-gradient(90deg,#0c91ff,#3459ff);
+
+  border:1px solid #4dc4ff;
+
+  font-weight:800;
+
+  box-shadow:0 0 15px rgba(0,130,255,.3);
+}
+
+.primary.full{
+  width:100%;
+}
+
+/* =========================
+   INVITE
+========================= */
+
+.invite{
+  display:flex;
+  align-items:center;
+  gap:9px;
+
+  padding:11px;
+
+  border-radius:13px;
+
+  background:
+    linear-gradient(90deg,#3d104e,#10366b);
+
+  border:1px solid #693db5;
+}
+
+.gift{
+  font-size:25px;
+}
+
+.invite-title{
+  font-size:11px;
+  font-weight:800;
+}
+
+.arrow{
+  margin-left:auto;
+  font-size:22px;
+  color:#b9a4ff;
+}
+
+/* =========================
+   SECTION
+========================= */
+
+.section-title{
+  font-size:13px;
+  font-weight:900;
+  margin:12px 2px 7px;
+}
+
+/* =========================
+   TASK
+========================= */
+
+.task{
+  display:flex;
+  align-items:center;
+  gap:9px;
+
+  padding:9px;
+
+  margin-bottom:6px;
+
+  border-radius:12px;
+
+  background:#06234a;
+
+  border:1px solid #135888;
+}
+
+.task.yellow{
+  background:
+    linear-gradient(90deg,#ffc900,#f69e00);
+  color:#201700;
+  border-color:#ffe044;
+}
+
+.task-icon{
+  width:35px;
+  height:35px;
+
+  flex-shrink:0;
+
+  border-radius:10px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#117fe6;
+
+  font-size:16px;
+}
+
+.task.yellow .task-icon{
+  background:#ffdb31;
+}
+
+.task-body{
+  flex:1;
+}
+
+.task-body strong{
+  display:block;
+  font-size:10px;
+}
+
+.task-body span{
+  color:#91afd0;
+  font-size:8px;
+}
+
+.task.yellow .task-body span{
+  color:#553c00;
+}
+
+.go{
+  padding:6px 10px;
+  border-radius:9px;
+  background:#2866ff;
+  font-size:9px;
+  font-weight:800;
+}
+
+.done{
+  padding:6px 10px;
+  border-radius:9px;
+  background:#1dd8a1;
+  color:#03251d;
+  font-size:9px;
+  font-weight:800;
+}
+
+/* =========================
+   TABS
+========================= */
+
+.tabs{
+  display:flex;
+  gap:4px;
+
+  padding:4px;
+
+  background:#061a35;
+
+  border:1px solid #10466f;
+
+  border-radius:11px;
+
+  margin:8px 0;
+}
+
+.tabs button{
+  flex:1;
+  padding:7px 3px;
+  border-radius:8px;
+  background:transparent;
+  color:#8ba7c7;
+  font-size:8px;
+}
+
+.tabs button.active{
+  color:white;
+  background:#167df1;
+  box-shadow:0 0 12px #006eff55;
+}
+
+/* =========================
+   BOOST
+========================= */
+
+.metric{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.metric strong{
+  font-size:20px;
+}
+
+.chart{
+  height:145px;
+
+  margin-top:9px;
+
+  border-radius:10px;
+
+  overflow:hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,255,143,.13),
+      transparent
+    );
+}
+
+.chart svg{
+  width:100%;
+  height:100%;
+}
+
+.upgrade{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.upgrade-icon{
+  width:42px;
+  height:42px;
+
+  border-radius:11px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#095b42;
+
+  border:1px solid #1ae99b;
+}
+
+.upgrade-body{
+  flex:1;
+}
+
+.upgrade-body strong{
+  display:block;
+  font-size:11px;
+}
+
+.upgrade-body span{
+  color:#8eacd0;
+  font-size:8px;
+}
+
+/* =========================
+   REFERRAL
+========================= */
+
+.referral-link{
+  display:flex;
+  align-items:center;
+
+  padding:9px;
+
+  border-radius:9px;
+
+  background:#061a37;
+
+  border:1px solid #14527d;
+
+  font-size:8px;
+}
+
+.referral-link span{
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  flex:1;
+}
+
+.copy{
+  margin-left:8px;
+  color:#5acbff;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:8px;
+}
+
+.table th{
+  color:#7192b5;
+  text-align:left;
+  padding:7px 3px;
+}
+
+.table td{
+  padding:8px 3px;
+  border-top:1px solid #0d3558;
+}
+
+.mini-avatar{
+  width:24px;
+  height:24px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:#efb18b;
+}
+
+/* =========================
+   WALLET
+========================= */
+
+.wallet-id{
+  margin:9px -11px -11px;
+  padding:10px;
+
+  background:#0b59df;
+
+  border-radius:0 0 12px 12px;
+
+  font-size:9px;
+  font-weight:800;
+}
+
+.asset{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:11px 0;
+
+  border-bottom:1px solid #103c61;
+}
+
+.asset:last-child{
+  border-bottom:0;
+}
+
+.asset strong{
+  font-size:11px;
+}
+
+/* =========================
+   MARKET
+========================= */
+
+.market-price{
+  font-size:22px;
+  font-weight:900;
+  margin-top:2px;
+}
+
+.market-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+
+.market-stats .stat{
+  text-align:left;
+  padding:8px;
+}
+
+.market-stats strong{
+  font-size:9px;
+}
+
+.market-stats span{
+  font-size:7px;
+}
+
+/* =========================
+   LEVELS
+========================= */
+
+.locked{
+  opacity:.67;
+}
+
+.gold{
+  border-color:#d5a900;
+}
+
+/* =========================
+   BOTTOM NAV
+========================= */
+
+.bottom-nav{
+  position:fixed;
+
+  bottom:0;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  width:100%;
+  max-width:480px;
+
+  height:72px;
+
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+
+  padding:7px 5px env(safe-area-inset-bottom);
+
+  background:rgba(2,13,29,.97);
+
+  backdrop-filter:blur(14px);
+
+  border-top:1px solid #123e61;
+
+  z-index:50;
+}
+
+.nav{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  gap:3px;
+
+  background:transparent;
+
+  color:#6e8dab;
+
+  font-size:8px;
+}
+
+.nav-icon{
+  width:31px;
+  height:27px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:8px;
+
+  font-size:17px;
+}
+
+.nav.active{
+  color:#39cbff;
+}
+
+.nav.active .nav-icon{
+  background:#073c70;
+  box-shadow:0 0 13px #008cff35;
+}
+
+/* =========================
+   TOAST
+========================= */
+
+.toast{
+  position:fixed;
+
+  top:18px;
+  left:50%;
+
+  transform:
+    translate(-50%,-80px);
+
+  padding:9px 14px;
+
+  background:#0b3157;
+
+  border:1px solid #25c1ff;
+
+  border-radius:10px;
+
+  font-size:10px;
+
+  z-index:100;
+
+  transition:.25s;
+
+  box-shadow:0 0 20px #007dff55;
+}
+
+.toast.show{
+  transform:translate(-50%,0);
+}
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media(min-width:700px){
+
+  body{
+    padding:20px;
+  }
+
+  .app{
+    min-height:calc(100vh - 40px);
+    border-radius:24px;
+    border:1px solid #123e61;
+  }
+
+  .bottom-nav{
+    bottom:20px;
+    border-radius:0 0 24px 24px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div id="toast" class="toast">Done</div>
+
+<!-- ==================================================
+     HOME
+================================================== -->
+
+<section class="screen active" id="home">
+
+<header class="header">
+
+<div class="brand">
+
+<div class="logo">ND</div>
+
+<div>
+<div class="brand-name">
+NayaDost Mining <span class="verified">✓</span>
+</div>
+
+<div class="subtitle">
+Tap · Mine · Grow Together
+</div>
+</div>
+
+</div>
+
+<button class="header-btn"
+onclick="showToast('Notifications opened')">
+♙
+</button>
+
+</header>
+
+
+<div class="card">
+
+<div class="profile">
+
+<div class="avatar">👨🏻</div>
+
+<div>
+<div class="username">Sailesh Giri</div>
+<div class="handle">@SaileshGiri</div>
+</div>
+
+<div class="badge">♟ Beginner</div>
+
+</div>
+
+
+<div class="balance">
+
+<div class="coin">N</div>
+
+<div>
+
+<div class="label">
+Your Balance
+</div>
+
+<div class="balance-number"
+id="balance">
+1.250 NYD
+</div>
+
+<div class="green">
++0.01/h
+</div>
+
+</div>
+
+<div class="wallet-icon">
+▣
+</div>
+
+</div>
+
+
+<div class="stats">
+
+<div class="stat">
+<strong id="taps">1,248</strong>
+<span>Total Taps</span>
+</div>
+
+<div class="stat">
+<strong>12</strong>
+<span>Referrals</span>
+</div>
+
+<div class="stat">
+<strong class="green">+1.25 NYD</strong>
+<span>Today Earned</span>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="mine-box">
+
+<div class="mine-circle">
+
+<div class="pickaxe">
+⛏
+</div>
+
+</div>
+
+<div class="mine-title">
+Tap to Mine
+</div>
+
+<div class="small">
+(100 taps/day)
+</div>
+
+<button class="primary"
+onclick="mine()">
+⛏ TAP TO MINE
+</button>
+
+</div>
+
+
+<div class="invite"
+onclick="showToast('Referral link copied')">
+
+<div class="gift">🎁</div>
+
+<div>
+<div class="invite-title">
+Invite Friends
+</div>
+
+<div class="small">
+Get 50 NYD per successful referral
+</div>
+</div>
+
+<div class="arrow">›</div>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+     MINING / REWARDS
+================================================== -->
+
+<section class="screen" id="mining">
+
+<header class="header">
+
+<div class="brand">
+
+<div class="logo">ND</div>
+
+<div>
+<div class="brand-name">
+NayaDost Mining ✓
+</div>
+
+<div class="subtitle">
+Tap · Mine · Grow Together
+</div>
+</div>
+
+</div>
+
+<button class="header-btn">⋮</button>
+
+</header>
+
+
+<div class="card">
+
+<div class="metric">
+
+<div>
+<div class="label">Daily Check-in</div>
+<strong class="green">+5 NYD</strong>
+</div>
+
+<div style="font-size:27px">
+⚡
+</div>
+
+<div>
+<div class="label">Current Streak</div>
+<strong>🔥 3 Days</strong>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="section-title">
+Earn Rewards
+</div>
+
+<div class="small">
+Complete quests and earn NYD directly to your wallet.
+</div>
+
+
+<div class="task yellow"
+onclick="showToast('Quest sponsored')">
+
+<div class="task-icon">★</div>
+
+<div class="task-body">
+<strong>Sponsor a Quest</strong>
+<span>Promote your channel or project</span>
+</div>
+
+<div>›</div>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">➤</div>
+
+<div class="task-body">
+<strong>Join NayaDost Telegram Channel</strong>
+<span>Claimed</span>
+</div>
+
+<div class="done">✓</div>
+
+</div>
+
+
+<div class="task"
+onclick="reward(.5)">
+
+<div class="task-icon">➤</div>
+
+<div class="task-body">
+<strong>Check latest TG channel post</strong>
+<span>+0.5 NYD</span>
+</div>
+
+<div>›</div>
+
+</div>
+
+
+<div class="task"
+onclick="reward(5)">
+
+<div class="task-icon">◷</div>
+
+<div class="task-body">
+<strong>Daily Check-in</strong>
+<span>+5 NYD</span>
+</div>
+
+<div>›</div>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">𝕏</div>
+
+<div class="task-body">
+<strong>Follow X (Twitter) post</strong>
+<span>Claimed</span>
+</div>
+
+<div class="done">✓</div>
+
+</div>
+
+
+<div class="task"
+onclick="reward(5)">
+
+<div class="task-icon">𝕏</div>
+
+<div class="task-body">
+<strong>React to X (Twitter) post</strong>
+<span>+5 NYD</span>
+</div>
+
+<div>›</div>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+     QUESTS
+================================================== -->
+
+<section class="screen" id="quests">
+
+<header class="header">
+
+<div>
+<div class="card-title">
+Quests & Tasks
+</div>
+
+<div class="subtitle">
+Complete tasks, earn NYD, and get rewards!
+</div>
+</div>
+
+<button class="header-btn">⋮</button>
+
+</header>
+
+
+<div class="tabs">
+
+<button class="active"
+onclick="selectTab(this)">
+All
+</button>
+
+<button onclick="selectTab(this)">
+Social
+</button>
+
+<button onclick="selectTab(this)">
+Telegram
+</button>
+
+<button onclick="selectTab(this)">
+Other
+</button>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">➤</div>
+
+<div class="task-body">
+<strong>Join NayaDost Telegram Channel</strong>
+<span>+5 NYD</span>
+</div>
+
+<button class="go"
+onclick="reward(5)">
+Go
+</button>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">𝕏</div>
+
+<div class="task-body">
+<strong>Follow on X (Twitter)</strong>
+<span>+5 NYD</span>
+</div>
+
+<button class="go"
+onclick="reward(5)">
+Go
+</button>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">▶</div>
+
+<div class="task-body">
+<strong>Watch 1 Video</strong>
+<span>+10 NYD</span>
+</div>
+
+<button class="go"
+onclick="reward(10)">
+Go
+</button>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">👥</div>
+
+<div class="task-body">
+<strong>Join Our Group</strong>
+<span>+5 NYD</span>
+</div>
+
+<button class="go"
+onclick="reward(5)">
+Go
+</button>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">●</div>
+
+<div class="task-body">
+<strong>Complete Profile</strong>
+<span>+10 NYD</span>
+</div>
+
+<button class="done">
+Done
+</button>
+
+</div>
+
+
+<div class="task">
+
+<div class="task-icon">♟</div>
+
+<div class="task-body">
+<strong>Invite 1 Friend</strong>
+<span>+50 NYD</span>
+</div>
+
+<button class="go"
+onclick="reward(50)">
+Go
+</button>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+     BOOST
+================================================== -->
+
+<section class="screen" id="boost">
+
+<header class="header">
+
+<div>
+<div class="card-title">
+Boost Mining Speed
+</div>
+
+<div class="subtitle">
+Upgrade your mining gear to earn more NYD per second.
+</div>
+</div>
+
+<button class="header-btn">⋮</button>
+
+</header>
+
+
+<div class="card">
+
+<div class="label">
+Portfolio
+</div>
+
+<div class="card-title"
+style="font-size:17px;margin-top:5px">
+👑 Level 2
+</div>
+
+<div class="green"
+style="font-size:9px;margin-top:4px">
+Today's PNL +48.8 NYD
+</div>
+
+
+<div class="chart">
+
+<svg viewBox="0 0 500 160"
+preserveAspectRatio="none">
+
+<defs>
+
+<linearGradient
+id="greenGradient"
+x1="0"
+y1="0"
+x2="0"
+y2="1">
+
+<stop
+offset="0"
+stop-color="#00f58a"
+stop-opacity=".65"/>
+
+<stop
+offset="1"
+stop-color="#00f58a"
+stop-opacity="0"/>
+
+</linearGradient>
+
+</defs>
+
+<path
+d="M0 135
+C55 75 75 55 120 35
+S190 55 240 100
+S320 115 365 78
+S425 45 500 60
+L500 160
+L0 160Z"
+fill="url(#greenGradient)"/>
+
+<path
+d="M0 135
+C55 75 75 55 120 35
+S190 55 240 100
+S320 115 365 78
+S425 45 500 60"
+fill="none"
+stroke="#18ef78
+
