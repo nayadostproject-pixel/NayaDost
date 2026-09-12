@@ -1,9 +1,23 @@
 <!DOCTYPE html><html lang="en"><head>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NYD Theme 4 PURPLE</title>
+<title>NYD Miner - Theme 4</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700;800&display=swap" rel="stylesheet">
 <style>
-body{margin:0;min-height:100vh;background:linear-gradient(135deg,#5a18c9 0%,#2a0a5c 40%,#ff6a00 100%);display:grid;place-items:center;color:#fff;font-family:sans-serif}
-.box{background:rgba(0,0,0,0.4);padding:30px;border-radius:20px;border:2px solid #ffae00;text-align:center}
-.btn{background:linear-gradient(90deg,#ff7a1a,#ffae00);padding:12px 30px;border-radius:30px;border:2px solid #fff;color:#fff;font-weight:900}
-</style>
-</head><body><div class="box"><h1>THEME 4 LIVE</h1><p>Purple #5a18c9 + Orange #ff6a00</p><div class="btn">CLAIM</div><p>11.8845 NYD</p></div></body></html>
+body{margin:0;min-height:100vh;background:linear-gradient(135deg,#5a18c9 0%,#2a0a5c 40%,#ff6a00 100%);background-attachment:fixed;color:#fff;font-family:'Fredoka',sans-serif}
+.app{max-width:420px;margin:0 auto;padding:12px 14px 90px}
+.card{background:linear-gradient(180deg,#3e1a8a,#2a1155);border:2px solid #7a4dff;border-radius:22px;padding:16px;margin-top:14px;box-shadow:0 0 20px rgba(122,77,255,.5);text-align:center}
+.coin{width:130px;height:130px;margin:14px auto;background:radial-gradient(circle at 30% 30%,#fff7a0,#ffcc00 30%,#ff8a00 70%);border-radius:50%;border:4px solid #fff;display:grid;place-items:center;font-size:42px;color:#5a2a00;box-shadow:0 0 30px rgba(255,170,0,.8),0 8px 0 #c45200}
+.btn{width:100%;border:0;padding:14px;border-radius:30px;font-family:'Fredoka';font-size:18px;font-weight:800;background:linear-gradient(90deg,#ff7a1a,#ffae00);color:#fff;border:2px solid #fff;box-shadow:0 5px 0 #c45200}
+.nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:92%;max-width:400px;background:rgba(26,8,51,.95);border:2px solid #7a4dff;border-radius:20px;display:grid;grid-template-columns:repeat(5,1fr);height:70px}
+.nav button{background:none;border:0;color:#8ea5dc;font-size:10px}
+.nav button.active{color:#ffae00}
+.nav button span{display:block;font-size:20px}
+</style></head><body>
+<div class="app">
+<div style="display:flex;justify-content:space-between"><div style="font-size:26px;color:#ffd86a">NYD</div><div style="background:rgba(0,0,0,.3);padding:6px 10px;border-radius:20px;border:1px solid #ffae00;font-size:11px">● READY</div></div>
+<div class="card"><div style="letter-spacing:2px;font-size:11px;color:#ffae7a">TOTAL BALANCE</div><div style="font-size:38px" id="bal">11.8845 <span style="font-size:20px;color:#ffae00">NYD</span></div><div class="coin">NYD</div><div style="color:#22ff88">⛏️ Mining Active</div><div style="font-size:12px;opacity:.8">0.20 TH/s • +0.0005 NYD/sec</div><button class="btn" onclick="claim()">CLAIM REWARD</button></div>
+</div>
+<div class="nav"><button class="active"><span>⛏️</span>Mine</button><button><span>📋</span>Tasks</button><button><span>⚡</span>Miners</button><button><span>👥</span>Friends</button><button><span>👤</span>Profile</button></div>
+<script>let b=11.8845;function claim(){b+=0.5;document.getElementById('bal').innerHTML=b.toFixed(4)+' <span style="font-size:20px;color:#ffae00">NYD</span>'};if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}</script>
+</body></html>
