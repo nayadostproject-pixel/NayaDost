@@ -1,457 +1,60 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="https://telegram.org/js/telegram-web-app.js"></script><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>NYD Miner</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NYD Miner - Theme 4 GameFi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700;800&family=Inter:wght@500;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#020617;color:#fff;font-family:Arial,sans-serif}body{overflow-x:hidden}.app{width:100%;max-width:430px;min-height:100vh;margin:auto;padding:12px 10px 92px;background:radial-gradient(circle at 50% 35%,#071d52 0,#02091c 42%,#010513 100%)}
-.top{display:flex;align-items:center;justify-content:space-between;gap:7px}.brand{font-size:19px;font-weight:900}.brand span{color:#15e7ff}.pill{border:1px solid #27eaff;border-radius:20px;padding:8px 11px;font-size:11px;font-weight:800;background:#07173d;box-shadow:0 0 15px #00bfff44}.ready{color:#31ffb0}.title{text-align:center;font-size:27px;font-weight:900;margin:10px 0 3px}.sub{text-align:center;color:#9db4e9;font-size:12px;margin-bottom:12px}.card{border:1px solid #168dff;border-radius:17px;background:linear-gradient(145deg,#071a3aee,#040b20ee);box-shadow:0 0 18px #006eff33,inset 0 0 22px #153eff12;padding:13px;margin:9px 0}.assets{text-align:center}.label{font-size:12px;letter-spacing:2px;color:#b9caf0}.balance{font-size:29px;font-weight:900;margin:7px 0;color:#fff;text-shadow:0 0 15px #00d9ff}.balance b{color:#17eaff}.stats{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}.stat{border:1px solid #6445ff;border-radius:16px;padding:7px 11px;font-size:11px;background:#050d25}.stat b{color:#20eaff}
-.minerbox{text-align:center;padding:17px 10px 12px}.coin{width:205px;height:205px;margin:8px auto 18px;border-radius:50%;display:grid;place-items:center;color:#20eaff;border:7px solid #25dfff;background:radial-gradient(circle at 45% 40%,#5af7ff,#2051ff 35%,#5710bd 67%,#071338 70%);box-shadow:0 0 25px #08cfff,0 0 65px #4830ff,0 0 105px #2b1fff66;position:relative}.coin:after{content:"NYD";font-size:48px;position:absolute;inset:0;display:grid;place-items:center;color:white;text-shadow:0 0 12px #00eaff}.coin:before{content:"";position:absolute;inset:14px;border:2px dashed #9dfaff99;border-radius:50%}.btn{border:0;width:100%;border-radius:25px;padding:13px 15px;font-size:15px;font-weight:900;color:white;background:linear-gradient(90deg,#6818ff,#c414ff,#087cff);box-shadow:0 0 20px #6420ff66}.claim{font-size:17px}.row{display:flex;align-items:center;gap:10px}.icon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;display:grid;place-items:center;font-size:23px;background:linear-gradient(145deg,#182c88,#090e38);border:1px solid #365aff;box-shadow:0 0 12px #315cff55}.grow{flex:1}.name{font-weight:800;font-size:14px}.small{font-size:11px;color:#aabce8;margin-top:4px}.reward{color:#1ceaff;font-weight:900;font-size:12px;margin-top:5px}.go{border:1px solid #21dfff;border-radius:18px;padding:8px 13px;background:linear-gradient(90deg,#461cff,#087cff);font-weight:900;color:white}.section{font-size:14px;font-weight:900;margin:15px 3px 7px;color:#dce7ff}.levelgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.level{min-height:145px;border:1px solid #278cff;border-radius:15px;padding:9px;background:linear-gradient(145deg,#071d45,#050a20);box-shadow:0 0 12px #145dff33}.lv{font-size:11px;color:#d4e3ff}.price{font-size:23px;font-weight:900;color:#0ce6ff;text-align:center;margin:12px 0 7px}.speed{font-size:11px;text-align:center;color:#c1d2f4}.active{margin-top:9px;text-align:center;padding:8px;border-radius:12px;background:#16c8ef;color:#06132b;font-weight:900;font-size:11px}.locked{margin-top:9px;text-align:center;padding:8px;border-radius:12px;background:#141b6a;color:#d9e0ff;font-size:11px}.invite{font-size:11px;color:#b7c9ee;word-break:break-all;margin-top:4px}.copy{padding:8px 11px;border-radius:17px;border:1px solid #d942ff;background:#7020ff;color:#fff;font-weight:900}.profileitem{margin:8px 0}.value{color:#c9d9ff;font-size:11px;margin-top:4px}.value b{color:#12eaff}.yellow{background:linear-gradient(90deg,#fff600,#ffdd28);color:#181000}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);height:76px;background:#03091bfa;border-top:1px solid #168dff;border-radius:18px 18px 0 0;display:grid;grid-template-columns:repeat(5,1fr);z-index:5;box-shadow:0 -8px 30px #001d6655}.nav button{border:0;background:none;color:#8ea5dc;font-size:10px;font-weight:800}.nav button span{display:block;font-size:21px;margin-bottom:4px}.nav button.active{color:#18eaff;text-shadow:0 0 12px #00dfff}.page{display:none}.page.active{display:block}
+:root{--purple:#1a0833; --purple2:#3d0f8f; --orange:#ff7a1a; --orange2:#ffae00; --card:#2a1155; --green:#22ff88;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0; background:linear-gradient(135deg,#5a18c9 0%,#2a0a5c 40%,#ff6a00 100%); background-attachment:fixed; font-family:'Inter',sans-serif; color:#fff; min-height:100vh;}
+.app{max-width:420px; margin:0 auto; padding:12px 14px 90px;}
+.header{display:flex; justify-content:space-between; align-items:center; padding:6px 4px;}
+.logo{font-family:'Fredoka'; font-size:28px; font-weight:700; color:#ffd86a; text-shadow:0 0 10px #ff7a1a;}
+.coin-hero{width:120px; height:120px; margin:0 auto; background:radial-gradient(circle at 30% 30%,#fff7a0,#ffcc00 30%,#ff8a00 70%); border-radius:50%; border:4px solid #fff; display:flex; align-items:center; justify-content:center; font-family:'Fredoka'; font-size:42px; color:#5a2a00; box-shadow:0 0 30px rgba(255,170,0,0.8),0 10px 0 #c45200; position:relative; animation:float 3s ease-in-out infinite;}
+.card-main{background:linear-gradient(180deg,#3e1a8a,#2a1155); border:2px solid #7a4dff; border-radius:22px; padding:14px; box-shadow:0 0 20px rgba(122,77,255,0.5); margin-top:14px;}
+.mining-active{color:#22ff88; font-family:'Fredoka'; font-size:22px; font-weight:700;}
+.mining-nyd{font-family:'Fredoka'; font-size:38px; font-weight:800;}
+.mining-nyd span{font-size:20px; color:#ffae00;}
+.sub{font-size:13px; opacity:0.8; color:#ffae7a;}
+.level-row{display:flex; align-items:center; gap:10px; margin-top:12px; background:rgba(0,0,0,0.3); border-radius:12px; padding:8px 10px;}
+.progress{flex:1; height:10px; background:#1a0833; border-radius:10px; overflow:hidden;}
+.progress i{display:block; height:100%; background:linear-gradient(90deg,#ff7a1a,#ffae00); width:65%;}
+.btn-claim{width:100%; border:0; padding:14px; border-radius:25px; font-family:'Fredoka'; font-size:18px; font-weight:800; background:linear-gradient(90deg,#ff7a1a,#ffae00); color:#fff; border:2px solid #fff; box-shadow:0 5px 0 #c45200; margin-top:14px;}
+.nav{position:fixed; bottom:10px; left:50%; transform:translateX(-50%); width:92%; max-width:400px; background:rgba(26,8,51,0.95); border:2px solid #7a4dff; border-radius:20px; display:grid; grid-template-columns:repeat(5,1fr); height:70px;}
+.nav button{background:none; border:0; color:#8ea5dc; font-family:'Fredoka'; font-size:10px;}
+.nav button.active{color:#ffae00;}
+.nav button span{display:block; font-size:20px;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 </style>
+</head><body>
+<div class="app">
+<div class="header"><div class="logo">NYD</div><div style="background:rgba(0,0,0,0.3); padding:6px 10px; border-radius:20px; font-size:11px; border:1px solid #ffae00;">● READY</div></div>
 
+<div class="card-main" style="text-align:center;">
+<div style="color:#ffae7a; letter-spacing:2px; font-size:11px;">TOTAL BALANCE</div>
+<div class="mining-nyd" id="bal">11.8845 <span>NYD</span></div>
+<div class="coin-hero">NYD</div>
+<div class="mining-active">⛏️ Mining Active</div>
+<div class="sub">0.20 TH/s • +0.0005 NYD/sec</div>
+<button class="btn-claim" onclick="claim()">CLAIM REWARD</button>
+</div>
 
+<div class="level-row"><div style="font-size:20px;">⚡</div><div style="flex:1;"><div style="font-family:Fredoka;">Level 7 Miner</div><div class="sub">Next: Level 8 in 1,240 NYD</div><div class="progress" style="margin-top:5px;"><i></i></div></div></div>
 
+<div class="card-main"><div style="font-family:Fredoka;">🚀 Daily Tasks</div><div class="level-row"><div>📋</div><div style="flex:1;">Check-in Daily<br><span style="color:#ffae00; font-size:11px;">+25 NYD</span></div><button style="background:#7a4dff; border:0; color:#fff; padding:6px 12px; border-radius:12px;">Go</button></div></div>
 
-
-
-<style id="nayd-reference-final">
-html,body{
-  margin:0!important;
-  padding:0!important;
-  width:100%!important;
-  min-width:0!important;
-  min-height:100%!important;
-  overflow-x:hidden!important;
-  background:#020909!important;
-  color:#f5fffb!important;
-}
-
-body{
-  position:relative!important;
-  font-family:system-ui,-apple-system,"Segoe UI",sans-serif!important;
-}
-
-/* dark green mountain atmosphere */
-body:before{
-  content:""!important;
-  position:fixed!important;
-  inset:0!important;
-  z-index:-2!important;
-  pointer-events:none!important;
-  background:
-    radial-gradient(ellipse at 50% 35%,rgba(0,232,154,.10),transparent 42%),
-    radial-gradient(ellipse at 15% 80%,rgba(16,82,60,.22),transparent 40%),
-    radial-gradient(ellipse at 90% 75%,rgba(19,72,51,.18),transparent 38%),
-    linear-gradient(180deg,#031010 0%,#020909 65%,#010606 100%)!important;
-}
-
-/* subtle mountain silhouettes */
-body:after{
-  content:""!important;
-  position:fixed!important;
-  left:0!important;
-  right:0!important;
-  bottom:0!important;
-  height:42vh!important;
-  z-index:-1!important;
-  pointer-events:none!important;
-  opacity:.48!important;
-  background:
-    linear-gradient(135deg,transparent 0 18%,#09231d 18.2% 31%,transparent 31.2%),
-    linear-gradient(225deg,transparent 0 22%,#0a2921 22.2% 36%,transparent 36.2%),
-    linear-gradient(155deg,transparent 0 42%,#061b17 42.2% 58%,transparent 58.2%),
-    linear-gradient(205deg,transparent 0 45%,#08221b 45.2% 62%,transparent 62.2%);
-  filter:blur(.2px);
-}
-
-/* preserve page proportions */
-.page{
-  width:100%!important;
-  max-width:none!important;
-  box-sizing:border-box!important;
-  padding:16px 14px 105px!important;
-  background:transparent!important;
-}
-
-/* reference cards */
-.card{
-  box-sizing:border-box!important;
-  background:linear-gradient(145deg,rgba(10,34,30,.96),rgba(3,16,15,.97))!important;
-  border:1px solid rgba(0,232,154,.24)!important;
-  border-radius:18px!important;
-  box-shadow:0 8px 25px rgba(0,0,0,.38)!important;
-}
-
-.name,h1,h2,h3{
-  color:#f5fffb!important;
-}
-
-.small{
-  color:#91aaa4!important;
-}
-
-/* assets */
-.balance,.balance-card,.stats,.hero,.assets,.asset-card{
-  background:linear-gradient(145deg,#10382f,#061514)!important;
-  border-color:rgba(0,232,154,.42)!important;
-}
-
-/* remove ugly blue/purple pills */
-.balance [class*="wallet"],
-.balance-card [class*="wallet"],
-.assets [class*="wallet"],
-.asset-card [class*="wallet"]{
-  border-color:rgba(0,232,154,.25)!important;
-  background:rgba(3,20,18,.55)!important;
-}
-
-/* NYD colours */
-.nyd,.nyd-value,.price{
-  color:#00dfff!important;
-}
-
-.gold,.yellow,.reward{
-  color:#ffd34a!important;
-}
-
-/* clean green buttons */
-.go{
-  background:linear-gradient(180deg,#18dda0,#00b879)!important;
-  color:#00150f!important;
-  border-radius:11px!important;
-  box-shadow:0 5px 14px rgba(0,232,154,.14)!important;
-}
-
-.go.yellow{
-  background:linear-gradient(180deg,#ffe66a,#ffc928)!important;
-  color:#241c00!important;
-}
-
-/* claim */
-.claim,.claim-btn,#claimBtn{
-  background:linear-gradient(180deg,#1ae7a3,#00bd7d)!important;
-  color:#00140e!important;
-  border:1px solid rgba(130,255,215,.60)!important;
-  border-radius:28px!important;
-  box-shadow:0 7px 20px rgba(0,232,154,.20)!important;
-}
-
-/* gold mining coin, while keeping its existing dimensions */
-.coin,.mine-coin,.mining-coin{
-  background:radial-gradient(circle at 35% 28%,#fff5a5 0%,#ffd94d 25%,#e5a817 65%,#9a6108 100%)!important;
-  border-color:#ffd84d!important;
-  box-shadow:
-    0 0 0 6px rgba(255,216,77,.10),
-    0 0 28px rgba(255,216,77,.25)!important;
-}
-
-/* miner cards */
-.miner,.miner-card,.store-card{
-  background:linear-gradient(145deg,#0b2420,#061412)!important;
-  border-color:rgba(0,232,154,.20)!important;
-}
-
-/* icons */
-.icon{
-  background:linear-gradient(145deg,#123b34,#071614)!important;
-  border-color:rgba(0,232,154,.22)!important;
-}
-
-/* =========================================================
-   FIX BOTTOM NAV — EXACTLY 5 EQUAL TABS, FULL WIDTH
-   ========================================================= */
-
-body .nav,
-html body .nav{
-  position:fixed!important;
-  left:8px!important;
-  right:8px!important;
-  bottom:8px!important;
-  width:auto!important;
-  max-width:none!important;
-  min-width:0!important;
-  height:70px!important;
-  min-height:70px!important;
-  margin:0!important;
-  padding:6px!important;
-  box-sizing:border-box!important;
-
-  display:flex!important;
-  flex-direction:row!important;
-  flex-wrap:nowrap!important;
-  align-items:stretch!important;
-  justify-content:space-between!important;
-
-  transform:none!important;
-  overflow:hidden!important;
-
-  background:rgba(3,17,16,.97)!important;
-  border:1px solid rgba(0,232,154,.22)!important;
-  border-radius:21px!important;
-  box-shadow:0 12px 35px rgba(0,0,0,.62)!important;
-  z-index:999999!important;
-}
-
-body .nav button,
-html body .nav button{
-  position:relative!important;
-  float:none!important;
-  flex:1 1 20%!important;
-  width:20%!important;
-  min-width:0!important;
-  max-width:20%!important;
-  height:56px!important;
-  min-height:56px!important;
-  margin:0 2px!important;
-  padding:4px 1px!important;
-  box-sizing:border-box!important;
-
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:center!important;
-  justify-content:center!important;
-
-  transform:none!important;
-  border:0!important;
-  border-radius:15px!important;
-  background:transparent!important;
-  color:#91aaa4!important;
-  font-size:10px!important;
-  font-weight:700!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-}
-
-body .nav button.active,
-html body .nav button.active{
-  color:#00e89a!important;
-  background:rgba(0,232,154,.11)!important;
-  box-shadow:inset 0 0 0 1px rgba(0,232,154,.12)!important;
-}
-
-body .nav button.active:after,
-html body .nav button.active:after{
-  content:""!important;
-  position:absolute!important;
-  bottom:3px!important;
-  left:50%!important;
-  transform:translateX(-50%)!important;
-  width:27px!important;
-  height:3px!important;
-  margin:0!important;
-  border-radius:5px!important;
-  background:#00e89a!important;
-  box-shadow:0 0 9px rgba(0,232,154,.55)!important;
-}
-
-@media(max-width:420px){
-  body .nav,
-  html body .nav{
-    left:5px!important;
-    right:5px!important;
-    bottom:5px!important;
-  }
-
-  body .nav button,
-  html body .nav button{
-    font-size:9px!important;
-  }
-}
-</style>
-</head><body><div class="app">
-<section id="mine" class="page active"><div class="top"><div class="brand">NayaDost<span>•NYD</span></div><div class="pill ready">● READY</div></div><div class="card assets"><div class="label">ASSETS</div><div class="balance">11.8845 <b>NYD</b></div><div class="stats"><div class="stat">HOLDING WALLET: <b>0 NYD</b></div><div class="stat">POOL WALLET: <b>11.8845 NYD</b></div></div></div><div class="card minerbox"><div class="coin"></div><button class="btn claim" onclick="claim()">CLAIM</button><div class="small" id="mineStatus">Mining ready • 0.20 TH/s</div></div></section>
-<section id="tasks" class="page"><div class="title">Tasks</div><div class="sub">Complete tasks and earn NYD rewards.</div><div id="taskList"></div></section>
-<section id="miners" class="page"><div class="title">Miner Store</div><div class="sub">Auto-unlocks based on your NYD holding.</div><div class="card"><div class="label">MY LEVEL JOURNEY</div><div class="name" style="font-size:17px;margin-top:7px">Level 1 • Peak 96</div><div class="small">Today's P&amp;L <b style="color:#19eaff">+11.9 NYD</b></div></div><div class="levelgrid" id="levels"></div></section>
-<section id="friends" class="page"><div class="title">Friends</div><div class="sub">Invite friends to boost mining speed!</div><div class="card row"><div class="icon">🔗</div><div class="grow"><div class="name">Your Invite Link</div><div class="invite">https://t.me/NayaDostMining_NYD_bot?start=7321126194</div></div><button class="copy" onclick="copyLink()">Copy</button></div><div class="card row"><div class="icon">👥</div><div class="grow"><div class="name">Your Referrals</div><div class="small">0 successful · 0 total</div></div></div><div class="card row"><div class="icon">🎁</div><div class="grow"><div class="name">Referral Reward</div><div class="small">0 available · +100 NYD each</div></div><button class="go">Claim</button></div><div class="card row"><div class="icon">⌛</div><div class="grow"><div class="name">Team Wallet</div><div class="small">0 NYD · Earnings from your network</div></div><button class="go">Claim</button></div><div class="section" style="text-align:center">Latest invited friends</div><div class="small" style="text-align:center">No invited friends yet.</div><div class="coin" style="width:105px;height:105px;font-size:0;margin-top:22px"></div></section>
-<section id="profile" class="page"><div class="title">Profile</div><div class="sub">Your NYD account</div><div class="card profileitem row"><div class="icon">👤</div><div class="grow"><div class="name">User ID</div><div class="value">7321126194</div></div></div><div class="card profileitem row"><div class="icon">✅</div><div class="grow"><div class="name">Account Verification</div><div class="value">Unverified</div></div><button class="go">Verify</button></div><div class="card profileitem row"><div class="icon">🔇</div><div class="grow"><div class="name">Sound effects</div><div class="value">Muted — tap to enable</div></div><button class="go">Off</button></div><div class="card profileitem row"><div class="icon">💰</div><div class="grow"><div class="name">Assets</div><div class="value"><b>11.8845 NYD</b></div></div></div><div class="card profileitem row"><div class="icon">💳</div><div class="grow"><div class="name">Holding Wallet</div><div class="value">0 NYD</div></div></div><div class="card profileitem row"><div class="icon">🏦</div><div class="grow"><div class="name">Pool Wallet</div><div class="value">Withdrawable balance</div></div><b style="color:#19eaff">11.8845 NYD</b></div><div class="section">Controls</div><div class="card row"><div class="icon">↗️</div><div class="grow"><div class="name">Withdraw</div><div class="small">Transfer Pool to Wallet</div></div><button class="go yellow" onclick="withdrawNYD()">Withdraw</button></div><div class="card row"><div class="icon">📜</div><div class="grow"><div class="name">History</div><div class="small">Your withdrawals</div></div><button class="go yellow" onclick="showHistory()">Open</button></div></section>
-<nav class="nav"><button class="active" onclick="show('mine',this)"><span>⛏</span>Mine</button><button onclick="show('tasks',this)"><span>▤</span>Tasks</button><button onclick="show('miners',this)"><span>⚡</span>Miners</button><button onclick="show('friends',this)"><span>♟</span>Friends</button><button onclick="show('profile',this)"><span>●</span>Profile</button></nav></div>
+</div>
+<div class="nav">
+<button class="active"><span>⛏️</span>Mine</button>
+<button><span>📋</span>Tasks</button>
+<button><span>⚡</span>Miners</button>
+<button><span>👥</span>Friends</button>
+<button><span>👤</span>Profile</button>
+</div>
 <script>
-const API='https://bird-feature-bye-hills.trycloudflare.com';
-const tg=window.Telegram?.WebApp;
-const telegramUser=()=>tg?.initDataUnsafe?.user || window.Telegram?.WebApp?.initDataUnsafe?.user;
-tg?.ready();
-tg?.expand();
-
-function show(id,btn){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
-  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
-  btn?.classList.add('active');
-}
-
-async function claim(){
-  const uid=telegramUser()?.id;
-  if(!uid){alert('Telegram user not found.');return;}
-
-  try{
-    const r=await fetch(API+'/api/claim',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({telegram_id:uid})
-    });
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.error||'Claim failed');
-    alert('⛏️ +'+d.earned+' NYD claimed!');
-    location.reload();
-  }catch(e){
-    alert('Claim error: '+e.message);
-  }
-}
-
-const tasks=[
- ['💰','NYD Earn Payment Group','Join payout/support group','https://t.me/+_LIAeNDO355iNDI1',1],
- ['📢','NYD Earn Official','Join official NYD channel','https://t.me/NYDEarn_Official',2]
-];
-
-function openTask(link){
-  window.open(link,'_blank');
-}
-
-async function verifyTask(taskId,btn){
-  const uid=telegramUser()?.id;
-  if(!uid){alert('Telegram user not found.');return;}
-
-  btn.disabled=true;
-  btn.textContent='Verifying...';
-
-  try{
-    const r=await fetch(API+'/api/tasks/verify',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        telegram_id:uid,
-        task_id:Number(taskId)
-      })
-    });
-
-    const d=await r.json();
-
-    if(!r.ok){
-      alert(d.error||'Verification failed');
-      btn.disabled=false;
-      btn.textContent='Verify';
-      return;
-    }
-
-    if(Number(d.reward)>0){
-      alert('🎉 Verified! +'+d.reward+' NYD');
-      location.reload();
-    }else{
-      const m=d.remaining_seconds
-        ? Math.ceil(d.remaining_seconds/60)+' minutes remaining'
-        : (d.message||'Already verified');
-      alert(m);
-      btn.disabled=false;
-      btn.textContent='Verify';
-    }
-  }catch(e){
-    btn.disabled=false;
-    btn.textContent='Verify';
-    alert('Backend connection failed');
-  }
-}
-
-function renderTasks(){
-  const box=document.getElementById('taskList');
-  if(!box)return;
-
-  box.innerHTML=tasks.map(t=>`
-    <div class="card row">
-      <div class="icon">${t[0]}</div>
-      <div class="grow">
-        <div class="name">${t[1]}</div>
-        <div class="small">${t[2]}</div>
-        <div class="reward">Join → Verify → Earn</div>
-      </div>
-      <button class="go" onclick="openTask('${t[3]}')">Join</button>
-      <button class="go yellow" onclick="verifyTask(${t[4]},this)">Verify</button>
-    </div>
-  `).join('');
-}
-
-async function connectWallet(){
-  const address=prompt('Enter your wallet address:');
-  if(!address?.trim())return;
-
-  const uid=telegramUser()?.id;
-  if(!uid){alert('Telegram user not found.');return;}
-
-  try{
-    const r=await fetch(API+'/api/wallet/connect',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        telegram_id:uid,
-        wallet_address:address.trim(),
-        network:'TESTNET'
-      })
-    });
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.error||'Wallet connect failed');
-    alert('Wallet connected ✅');
-    location.reload();
-  }catch(e){alert(e.message);}
-}
-
-async function withdrawNYD(){
-  const amount=Number(prompt('Withdraw amount: 500 - 10000 NYD'));
-  if(!Number.isFinite(amount))return;
-
-  if(amount<500||amount>10000){
-    alert('Minimum 500 NYD aur maximum 10000 NYD hai.');
-    return;
-  }
-
-  if(!confirm(
-    'Withdraw: '+amount+' NYD\\n'+
-    'Burn: 15 NYD 🔥\\n'+
-    'Payout: '+(amount-15)+' NYD\\n'+
-    'Configured USDT price: $0.0010\\n'+
-    'USDT: $'+((amount-15)*0.001).toFixed(4)+'\\n\\nSubmit?'
-  ))return;
-
-  const uid=telegramUser()?.id;
-  if(!uid){alert('Telegram user not found.');return;}
-
-  try{
-    const r=await fetch(API+'/api/withdraw',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({telegram_id:uid,amount})
-    });
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.error||'Withdrawal failed');
-
-    alert(
-      'Withdrawal submitted ✅\\n'+
-      'ID: #'+d.withdrawal_id+'\\n'+
-      'Requested: '+d.amount+' NYD\\n'+
-      'Burn: 15 NYD 🔥\\n'+
-      'Payout: '+d.payout_nyd+' NYD\\n'+
-      'USDT: $'+Number(d.usdt_amount).toFixed(4)+'\\n'+
-      'Status: Pending'
-    );
-  }catch(e){alert(e.message);}
-}
-
-async function showHistory(){
-  const uid=telegramUser()?.id;
-  if(!uid){alert('Telegram user not found.');return;}
-
-  try{
-    const r=await fetch(API+'/api/withdrawals?telegram_id='+uid);
-    const d=await r.json();
-
-    if(!d.withdrawals?.length){
-      alert('No withdrawals yet.');
-      return;
-    }
-
-    alert('Withdrawal History\\n\\n'+d.withdrawals.map(w=>
-      '#'+w.id+' | '+w.amount+' NYD | Burn '+w.burn_nyd+
-      ' | Payout '+w.payout_nyd+' | $'+Number(w.usdt_amount||0).toFixed(4)+
-      ' | '+String(w.status).toUpperCase()
-    ).join('\\n'));
-  }catch(e){alert(e.message);}
-}
-
-renderTasks();
-</script></script></body></html>
+let b=11.8845;
+function claim(){ b+=0.5; document.getElementById('bal').innerHTML=b.toFixed(4)+' <span>NYD</span>'; }
+if(window.Telegram && Telegram.WebApp){Telegram.WebApp.ready(); Telegram.WebApp.expand();}
+</script>
+</body></html>
