@@ -52,3 +52,18 @@ This follows the TON Connect authentication flow documented by TON Foundation: a
 
 ## Failed to fetch fix
 The old external/Netlify API override has been removed. The production app is intentionally same-origin: the Node/Express server must serve both `public/` and `/api`. This prevents the Mini App from silently calling an unrelated static host. The server includes CORS support, OPTIONS handling, and `GET /api/health` for diagnostics.
+
+## Miner Store + real payments
+- Miner levels are 1–1000. Every locked level shows **PAY & UNLOCK**; a user can purchase any higher level directly.
+- Level payment amount is calculated from the level's NYD pack value × the current NYD price.
+- **USDT** uses the official USDT-on-TON jetton master and sends the exact micro-USDT amount.
+- **TON** converts the same pack USD value to TON using the live TON/USD rate when available.
+- Payment is sent from the connected TON Connect wallet. The wallet opens with the exact amount; if the wallet does not support the structured request, the app falls back to the TON payment deep link.
+- Payment confirmation is server-side only: the backend checks the TON Center indexed blockchain data for the exact recipient, sender and amount before unlocking the level. No client-side "paid" flag can unlock a level.
+- The same normal TON owner address can receive both TON and USDT on TON. `PAYMENT_USDT_ADDRESS` defaults to `DEPOSIT_ADDRESS`; set it separately only if your USDT receiving owner address is different.
+- Mining reward is recalculated from the purchased miner level on the backend, so changing local JavaScript cannot increase mining rewards.
+
+### Render environment
+The defaults are usable for testing, but production should set the real receiving address and NYD price source:
+`DEPOSIT_ADDRESS`, `PAYMENT_TON_ADDRESS`, `PAYMENT_USDT_ADDRESS`, `NYD_PRICE_FALLBACK` or `NYD_PRICE_API_URL`.
+`TONCENTER_API_KEY` is optional; the public TON Center v3 endpoint is rate-limited, so adding a key is recommended for a busy production app.

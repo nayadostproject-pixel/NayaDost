@@ -53,12 +53,16 @@ const APP_DOMAIN = String(process.env.APP_DOMAIN || '');
 const TON_NETWORK = String(process.env.TON_NETWORK || '-239');
 const TON_PROOF_TTL = Math.max(60, Number(process.env.TON_PROOF_TTL || 900));
 const PAYMENT_TON_ADDRESS = process.env.PAYMENT_TON_ADDRESS || DEPOSIT_ADDRESS;
-const PAYMENT_USDT_ADDRESS = String(process.env.PAYMENT_USDT_ADDRESS || '').trim();
+const PAYMENT_USDT_ADDRESS = String(process.env.PAYMENT_USDT_ADDRESS || DEPOSIT_ADDRESS).trim();
 const USDT_MASTER = process.env.USDT_MASTER || 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs';
 const TONAPI_BASE_URL = String(process.env.TONAPI_BASE_URL || 'https://tonapi.io').replace(/\/$/,'');
 const TONAPI_API_KEY = process.env.TONAPI_API_KEY || '';
+const TONCENTER_BASE_URL = String(process.env.TONCENTER_BASE_URL || 'https://toncenter.com/api/v3').replace(/\/$/,'');
+const TONCENTER_API_KEY = process.env.TONCENTER_API_KEY || '';
+const PAYMENT_TTL_MINUTES = Math.max(5, Number(process.env.PAYMENT_TTL_MINUTES || 30));
 const LEVEL_PRICE_MULTIPLIER = Math.max(0.000001, Number(process.env.LEVEL_PRICE_MULTIPLIER || 1));
 const TON_PRICE_USD = Math.max(0.000001, Number(process.env.TON_PRICE_USD || 1));
+const TON_PRICE_API_URL = String(process.env.TON_PRICE_API_URL || 'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
 // Multi-level referral commissions. The final rate continues for deeper levels.
 const REFERRAL_RATES = String(process.env.REFERRAL_RATES || '5,3,2,1,0.5').split(',').map(Number).filter(x=>Number.isFinite(x)&&x>0);
 const REFERRAL_MAX_TOTAL = Math.max(0, Number(process.env.REFERRAL_MAX_TOTAL || 15));
@@ -234,7 +238,7 @@ app.post('/api/mine',async(req,res)=>{try{
  const meta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[key]);
  if(meta)used=Number(meta.amount)||0;
  if(used>=100)return res.status(400).json({ok:false,error:'Daily 100 tap limit reached'});
- const reward=0.01*(1+Math.max(0,u.miner_level-1)*0.02);
+ const reward=0.01*(1+Math.max(0,Number(u.miner_level||1)-1)*0.02);
  await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
  if(meta) await run('UPDATE deposits SET amount=amount+? WHERE tx_hash=?',[1,key]);
  else await run('INSERT INTO deposits(user_id,tx_hash,amount,asset,network,status) VALUES(?,?,?,?,?,?)',[u.id,key,1,'TAPS','LOCAL','Counter']);
@@ -308,77 +312,80 @@ if(task.id==='daily'){
 
 function levelDef(level){
  const n=Number(level);
- if(!Number.isInteger(n)||n<2||n>96)throw new Error('Invalid miner level');
- const cost=n===2?100:Math.ceil(100*Math.pow(1.45,n-2));
- return {level:n,cost};
+ if(!Number.isInteger(n)||n<2||n>1000)throw new Error('Invalid miner level');
+ const cost=Math.ceil(100*Math.pow(n-1,1.35));
+ const speed=.20+(n-1)*.05;
+ const tapReward=.01*(1+(n-1)*.02);
+ return {level:n,cost,speed,tapReward};
 }
-function parseTonapiActions(node,out=[]){
- if(!node||typeof node!=='object')return out;
- if(Array.isArray(node)){for(const x of node)parseTonapiActions(x,out);return out;}
- if(node.type || node.action_type)out.push(node);
- for(const [k,v] of Object.entries(node)){if(k!=='actions')parseTonapiActions(v,out);}
- return out;
-}
-function normAddr(a){return String(a||'').trim();}
-function lower(a){return normAddr(a).toLowerCase();}
-function amountUnits(v){try{return BigInt(String(v||'0'))}catch{return 0n}}
-async function fetchTonApi(url){
+function rawAddress(a){try{return Address.parse(String(a||'')).toRawString().toLowerCase()}catch{return String(a||'').trim().toLowerCase()}}
+function paymentAgeOk(p){return (Date.now()-new Date(p.created_at+'Z').getTime()) <= PAYMENT_TTL_MINUTES*60*1000}
+async function getTonPriceUsd(){try{const r=await fetch(TON_PRICE_API_URL);const j=await r.json();const x=Number(j?.['the-open-network']?.usd ?? j?.price ?? j?.usd);if(Number.isFinite(x)&&x>0)return x}catch{}return TON_PRICE_USD}
+async function fetchTonCenter(url){
  const headers={'accept':'application/json'};
- if(TONAPI_API_KEY)headers.authorization=`Bearer ${TONAPI_API_KEY}`;
+ if(TONCENTER_API_KEY)headers['X-API-Key']=TONCENTER_API_KEY;
  const r=await fetch(url,{headers});
  const j=await r.json().catch(()=>({}));
- if(!r.ok)throw new Error(j.error||j.message||`TONAPI ${r.status}`);
+ if(!r.ok)throw new Error(j.error||j.message||`TON Center ${r.status}`);
  return j;
 }
-function actionMatchesPayment(action,p){
- const type=String(action.type||action.action_type||'').toLowerCase();
- const isJetton=type.includes('jetton');
- const isTon=type.includes('tontransfer')||type==='ton_transfer';
- if(p.asset==='TON'&&!isTon)return false;
- if(p.asset==='USDT'&&!isJetton)return false;
- const a=action[action.type]||action.details||action;
- const destination=lower(a.recipient?.address||a.recipient||a.destination?.address||a.destination||action.recipient?.address||action.recipient);
- const sender=lower(a.sender?.address||a.sender||action.sender?.address||action.sender);
- if(destination && destination!==lower(p.recipient))return false;
- if(sender && p.sender && sender!==lower(p.sender))return false;
- const amount=amountUnits(a.amount||action.amount);
- const expected=p.asset==='TON'?BigInt(p.amount_units):BigInt(p.amount_units);
- if(amount!==expected)return false;
- const text=String(a.comment||a.payload?.text||a.payload?.comment||action.comment||'');
- if(text && text.includes(p.invoice))return true;
- // Some indexers expose the comment under nested payloads.
- const blob=JSON.stringify(action);
- return blob.includes(p.invoice);
-}
 async function verifyLevelPayment(p){
- if(!TONAPI_API_KEY)throw new Error('TONAPI_API_KEY is required for real blockchain payment confirmation');
- const account=encodeURIComponent(p.recipient);
- const data=await fetchTonApi(`${TONAPI_BASE_URL}/v2/accounts/${account}/events?limit=100`);
- const actions=parseTonapiActions(data);
- for(const action of actions){if(actionMatchesPayment(action,p)){
-   const hash=action.event_id||action.tx_hash||action.transaction?.hash||action.hash||'';
-   return {confirmed:true,txHash:hash||null};
- }}
+ if(!paymentAgeOk(p))return {confirmed:false,expired:true};
+ const expected=BigInt(p.amount_units);
+ const sender=rawAddress(p.sender), recipient=rawAddress(p.recipient);
+ const start=Math.floor(new Date(p.created_at+'Z').getTime()/1000)-60;
+ if(p.asset==='USDT'){
+   const qs=new URLSearchParams({jetton_master:USDT_MASTER,direction:'in',start_utime:String(start),limit:'100',sort:'desc'});
+   const data=await fetchTonCenter(`${TONCENTER_BASE_URL}/jetton/transfers?${qs}`);
+   for(const t of (data.jetton_transfers||[])){
+     if(t.transaction_aborted)continue;
+     if(rawAddress(t.destination)!==recipient)continue;
+     if(sender && rawAddress(t.source)!==sender)continue;
+     if(BigInt(String(t.amount||0))<expected)continue;
+     return {confirmed:true,txHash:t.transaction_hash||t.trace_id||''};
+   }
+   return {confirmed:false};
+ }
+ const qs=new URLSearchParams({account:p.recipient,start_utime:String(start),limit:'100',sort:'desc'});
+ const data=await fetchTonCenter(`${TONCENTER_BASE_URL}/transactions?${qs}`);
+ for(const t of (data.transactions||[])){
+   if(t.description?.aborted || t.description?.action?.success===false)continue;
+   const m=t.in_msg||{};
+   if(rawAddress(m.destination)!==recipient)continue;
+   if(sender && rawAddress(m.source)!==sender)continue;
+   if(BigInt(String(m.value||0))<expected)continue;
+   return {confirmed:true,txHash:t.hash||m.hash||''};
+ }
  return {confirmed:false};
 }
-
 app.post('/api/level-payment/create',async(req,res)=>{try{
  const u=await getUser(req.body);
  if(!u.wallet_address||!u.verified)throw new Error('Connect and verify your TON wallet first');
  const target=levelDef(req.body.level);
- if(target.level!==Number(u.miner_level)+1)throw new Error('Unlock levels in order');
+ if(target.level<=Number(u.miner_level||1))throw new Error('This level is already unlocked');
  let price=PRICE_FALLBACK;
  if(PRICE_API_URL){try{const r=await fetch(PRICE_API_URL);const j=await r.json();const x=Number(j.price??j.usd??j.data?.price);if(Number.isFinite(x)&&x>0)price=x}catch{}}
  const amountUsdt=target.cost*price*LEVEL_PRICE_MULTIPLIER;
  if(!Number.isFinite(amountUsdt)||amountUsdt<=0)throw new Error('Invalid level payment amount');
  const asset=String(req.body.asset||'USDT').toUpperCase();
  if(!['TON','USDT'].includes(asset))throw new Error('Unsupported payment asset');
+ const existing=await get('SELECT * FROM level_payments WHERE user_id=? AND level=? AND asset=? AND status=\'Pending\' ORDER BY id DESC LIMIT 1',[u.id,target.level,asset]);
+ if(existing && paymentAgeOk(existing)){const payAmount=asset==='TON'?Number(existing.amount_units)/1e9:Number(existing.amount_units)/1e6;return res.json({ok:true,id:existing.id,invoice:existing.invoice,level:existing.level,costNyd:target.cost,speed:target.speed,tapReward:target.tapReward,amount:existing.amount,amountUnits:existing.amount_units,asset,recipient:existing.recipient,usdtMaster:USDT_MASTER,nydPrice:price,tonPriceUsd:await getTonPriceUsd(),payAmount,status:'Pending',reused:true});}
  const recipient=asset==='TON'?PAYMENT_TON_ADDRESS:PAYMENT_USDT_ADDRESS;
- if(asset==='USDT'&&!recipient)throw new Error('USDT receiving address is not configured on the server');
- const units=asset==='TON'?String(Math.ceil((amountUsdt/TON_PRICE_USD)*1e9)):String(Math.ceil(amountUsdt*1e6));
+ if(!recipient)throw new Error(asset==='USDT'?'USDT receiving address is not configured on the server':'TON receiving address is not configured on the server');
+ const tonPrice=await getTonPriceUsd();
+ const units=asset==='TON'?String(Math.ceil((amountUsdt/tonPrice)*1e9)):String(Math.ceil(amountUsdt*1e6));
  const invoice=`NYD-L${target.level}-${u.telegram_id}-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
  const r=await run('INSERT INTO level_payments(invoice,user_id,level,asset,amount,amount_units,recipient,sender) VALUES(?,?,?,?,?,?,?,?)',[invoice,u.id,target.level,asset,amountUsdt,units,recipient,u.wallet_address]);
- res.json({ok:true,id:r.lastID,invoice,level:target.level,costNyd:target.cost,amount:amountUsdt,amountUnits:units,asset,recipient,usdtMaster:USDT_MASTER,nydPrice:price,tonPriceUsd:TON_PRICE_USD,status:'Pending'});
+ res.json({ok:true,id:r.lastID,invoice,level:target.level,costNyd:target.cost,speed:target.speed,tapReward:target.tapReward,amount:amountUsdt,amountUnits:units,asset,recipient,usdtMaster:USDT_MASTER,nydPrice:price,tonPriceUsd:tonPrice,payAmount:asset==='TON'?Number(units)/1e9:Number(units)/1e6,status:'Pending'});
+}catch(e){res.status(400).json({ok:false,error:e.message})}});
+
+app.post('/api/level-payment/details',async(req,res)=>{try{
+ const u=await getUser(req.body);
+ const p=await get('SELECT invoice,level,asset,amount,amount_units,recipient,sender,status,created_at FROM level_payments WHERE invoice=? AND user_id=?',[req.body.invoice,u.id]);
+ if(!p)throw new Error('Payment invoice not found');
+ if(p.status==='Confirmed'){const payAmount=p.asset==='TON'?Number(p.amount_units)/1e9:Number(p.amount_units)/1e6;return res.json({ok:true,payment:{...p,payAmount,usdtMaster:USDT_MASTER}})}
+ const payAmount=p.asset==='TON'?Number(p.amount_units)/1e9:Number(p.amount_units)/1e6; res.json({ok:true,payment:{...p,payAmount,usdtMaster:USDT_MASTER}});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/level-payment/confirm',async(req,res)=>{try{
@@ -386,12 +393,13 @@ app.post('/api/level-payment/confirm',async(req,res)=>{try{
  const p=await get('SELECT * FROM level_payments WHERE invoice=? AND user_id=?',[req.body.invoice,u.id]);
  if(!p)throw new Error('Payment invoice not found');
  if(p.status==='Confirmed')return res.json({ok:true,confirmed:true,level:p.level,txHash:p.tx_hash,user:publicUser(u)});
- if(p.status==='Failed')throw new Error('Payment failed');
+ if(Number(u.miner_level||1)>=Number(p.level))return res.json({ok:true,confirmed:true,level:u.miner_level,txHash:p.tx_hash||'',user:publicUser(u)});
  if(lower(p.sender)!==lower(u.wallet_address))throw new Error('Connected wallet does not match the payment wallet');
+ if(!paymentAgeOk(p)){await run('UPDATE level_payments SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status=?',['Expired',p.id,'Pending']);return res.json({ok:true,confirmed:false,status:'Expired',error:'Payment invoice expired. Create a new payment.'});}
  const check=await verifyLevelPayment(p);
  if(!check.confirmed)return res.json({ok:true,confirmed:false,status:'Pending'});
  await run('UPDATE level_payments SET status=?,tx_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status=?',['Confirmed',check.txHash||'',p.id,'Pending']);
- await run('UPDATE users SET miner_level=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND miner_level=?',[p.level,u.id,p.level-1]);
+ await run('UPDATE users SET miner_level=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND miner_level<?',[p.level,u.id,p.level]);
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
  res.json({ok:true,confirmed:true,level:fresh.miner_level,txHash:check.txHash||'',user:publicUser(fresh)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
