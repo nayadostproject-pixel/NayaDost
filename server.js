@@ -103,19 +103,41 @@ function run(sql, params=[]){return new Promise((resolve,reject)=>db.run(sql,par
 function get(sql, params=[]){return new Promise((resolve,reject)=>db.get(sql,params,(e,row)=>e?reject(e):resolve(row)))}
 function all(sql, params=[]){return new Promise((resolve,reject)=>db.all(sql,params,(e,rows)=>e?reject(e):resolve(rows)))}
 function makeCode(){return crypto.randomBytes(5).toString('hex').toUpperCase()}
+function normalizeReferralCode(value){
+ let v=String(value||'').trim();
+ if(!v)return '';
+ // Telegram may pass ref_<CODE>, referral_<CODE>, or the raw referral code.
+ v=v.replace(/^ref(?:erral)?[_:-]/i,'');
+ return v.replace(/[^A-Za-z0-9]/g,'').slice(0,64);
+}
 async function getUser(body){
  const telegramId = String(body.telegram_id || body.telegramId || '');
  if(!telegramId) throw new Error('telegram_id required');
+ const incomingRef=normalizeReferralCode(body.referrer_code || body.start_param || body.referral_code);
  let u = await get('SELECT * FROM users WHERE telegram_id=?',[telegramId]);
  if(!u){
   let code; do{code=makeCode()}while(await get('SELECT id FROM users WHERE referral_code=?',[code]));
-  await run('INSERT INTO users(telegram_id,username,first_name,last_name,referral_code,referrer_code) VALUES(?,?,?,?,?,?)',[telegramId,body.username||'',body.first_name||'',body.last_name||'',code,body.referrer_code||null]);
+  let validRef=null;
+  if(incomingRef){
+   const ref=await get('SELECT id,telegram_id FROM users WHERE referral_code=?',[incomingRef]);
+   if(ref && String(ref.telegram_id)!==telegramId) validRef=ref;
+  }
+  await run('INSERT INTO users(telegram_id,username,first_name,last_name,referral_code,referrer_code) VALUES(?,?,?,?,?,?)',[telegramId,body.username||'',body.first_name||'',body.last_name||'',code,validRef?incomingRef:null]);
   u=await get('SELECT * FROM users WHERE telegram_id=?',[telegramId]);
-  if(body.referrer_code && body.referrer_code!==u.referral_code){
-   const ref=await get('SELECT id FROM users WHERE referral_code=?',[body.referrer_code]);
-   if(ref){await run('UPDATE users SET referrals=referrals+1 WHERE id=?',[ref.id]);}
+  if(validRef){
+   await run('UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?',[validRef.id]);
   }
  } else {
+  // A user may have opened the app before using a referral link. Bind the first
+  // valid referral code later, but never overwrite an existing referrer.
+  if(!u.referrer_code && incomingRef){
+   const ref=await get('SELECT id,telegram_id FROM users WHERE referral_code=?',[incomingRef]);
+   if(ref && ref.id!==u.id && String(ref.telegram_id)!==telegramId){
+    await run('UPDATE users SET referrer_code=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[incomingRef,u.id]);
+    await run('UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?',[ref.id]);
+    u=await get('SELECT * FROM users WHERE id=?',[u.id]);
+   }
+  }
   await run('UPDATE users SET username=?,first_name=?,last_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[body.username||u.username,body.first_name||u.first_name,body.last_name||u.last_name,u.id]);
   u=await get('SELECT * FROM users WHERE id=?',[u.id]);
  }
@@ -228,7 +250,7 @@ async function verifyTonProof({address:addressText,network,public_key,walletStat
  return true;
 }
 
-app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL}})}catch(e){res.status(400).json({ok:false,error:e.message})}});
+app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const mineKey='mine_'+u.id+'_'+today; const mineMeta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[mineKey]); const mineTaps=Number(mineMeta?.amount||0); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL},mineDay:today,mineTaps:mineTaps})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/mine',async(req,res)=>{try{
  const u=await getUser(req.body);
@@ -237,13 +259,13 @@ app.post('/api/mine',async(req,res)=>{try{
  let used=0;
  const meta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[key]);
  if(meta)used=Number(meta.amount)||0;
- if(used>=100)return res.status(400).json({ok:false,error:'Daily 100 tap limit reached'});
+ if(used>=5000)return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached'});
  const reward=0.01*(1+Math.max(0,Number(u.miner_level||1)-1)*0.02);
  await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
  if(meta) await run('UPDATE deposits SET amount=amount+? WHERE tx_hash=?',[1,key]);
  else await run('INSERT INTO deposits(user_id,tx_hash,amount,asset,network,status) VALUES(?,?,?,?,?,?)',[u.id,key,1,'TAPS','LOCAL','Counter']);
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
- res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,remaining:99-used});
+ res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,remaining:4999-used});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/claim',async(req,res)=>{try{
@@ -289,7 +311,7 @@ app.post('/api/verify-wallet',async(req,res)=>res.status(400).json({ok:false,err
 app.post('/api/wallet/disconnect',async(req,res)=>{try{const u=await getUser(req.body);await run('UPDATE users SET wallet_address=NULL,wallet_type=NULL,verified=0,updated_at=CURRENT_TIMESTAMP WHERE id=?',[u.id]);const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,user:publicUser(fresh)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 async function telegramMemberStatus(userId, chat){
- if(!BOT_TOKEN) return {ok:false,configured:false,status:'unknown',description:'TELEGRAM_BOT_TOKEN is not configured on Render'};
+ if(!BOT_TOKEN) return {ok:false,configured:false,status:'unknown',description:'Telegram verification is not configured. Add TELEGRAM_BOT_TOKEN in Render Environment.'};
  let target=String(chat||'').trim();
  if(target.startsWith('https://t.me/')){target=target.replace('https://t.me/','').replace(/^\+/,'');if(target.includes('/'))target=target.split('/')[0];if(target.startsWith('+'))return {ok:false,configured:false,status:'unknown',description:'Private invite channel needs its numeric Telegram chat ID in EARN_CHANNEL_CHAT_ID'};}
  const url=`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(target)}&user_id=${encodeURIComponent(userId)}`;

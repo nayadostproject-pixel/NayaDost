@@ -67,3 +67,10 @@ The old external/Netlify API override has been removed. The production app is in
 The defaults are usable for testing, but production should set the real receiving address and NYD price source:
 `DEPOSIT_ADDRESS`, `PAYMENT_TON_ADDRESS`, `PAYMENT_USDT_ADDRESS`, `NYD_PRICE_FALLBACK` or `NYD_PRICE_API_URL`.
 `TONCENTER_API_KEY` is optional; the public TON Center v3 endpoint is rate-limited, so adding a key is recommended for a busy production app.
+
+
+## Referral + Telegram task fix
+- Referral start parameters are normalized from `ref_CODE`, `referral_CODE`, or raw CODE.
+- If a user opened the app before using a referral link, the first valid referral can now be attached later; existing referrers are never overwritten.
+- Referral total increments once when the referral is attached; the 100 NYD successful reward is still granted only after the referred user's first successful wallet verification.
+- Telegram Join & Verify requires `TELEGRAM_BOT_TOKEN` on Render. For a private invite channel, also set its numeric `EARN_CHANNEL_CHAT_ID`; the bot must be able to see members.
