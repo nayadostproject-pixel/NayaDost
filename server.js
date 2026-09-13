@@ -83,6 +83,7 @@ db.serialize(()=>{
  db.run(`CREATE TABLE IF NOT EXISTS referral_earnings(id INTEGER PRIMARY KEY AUTOINCREMENT, beneficiary_id INTEGER NOT NULL, source_user_id INTEGER NOT NULL, source_claim_id TEXT NOT NULL, level INTEGER NOT NULL, rate REAL NOT NULL, amount REAL NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, UNIQUE(beneficiary_id,source_claim_id,level))`);
  db.run(`CREATE TABLE IF NOT EXISTS withdrawals(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL, burn REAL, net REAL, address TEXT, status TEXT DEFAULT 'Pending', admin_note TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`CREATE TABLE IF NOT EXISTS deposits(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tx_hash TEXT UNIQUE, amount REAL, asset TEXT, network TEXT, status TEXT DEFAULT 'Pending', created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
+ db.run(`CREATE TABLE IF NOT EXISTS mine_daily(user_id INTEGER NOT NULL, day TEXT NOT NULL, taps INTEGER DEFAULT 0, PRIMARY KEY(user_id,day))`);
  db.run(`CREATE TABLE IF NOT EXISTS price_history(id INTEGER PRIMARY KEY AUTOINCREMENT, price REAL, source TEXT, fetched_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`CREATE TABLE IF NOT EXISTS ton_proof_nonces(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, payload TEXT UNIQUE NOT NULL, expires_at INTEGER NOT NULL, used INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`CREATE TABLE IF NOT EXISTS level_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, invoice TEXT UNIQUE NOT NULL, user_id INTEGER NOT NULL, level INTEGER NOT NULL, asset TEXT NOT NULL, amount REAL NOT NULL, amount_units TEXT NOT NULL, recipient TEXT NOT NULL, sender TEXT, status TEXT DEFAULT 'Pending', tx_hash TEXT, admin_note TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
@@ -103,50 +104,22 @@ function run(sql, params=[]){return new Promise((resolve,reject)=>db.run(sql,par
 function get(sql, params=[]){return new Promise((resolve,reject)=>db.get(sql,params,(e,row)=>e?reject(e):resolve(row)))}
 function all(sql, params=[]){return new Promise((resolve,reject)=>db.all(sql,params,(e,rows)=>e?reject(e):resolve(rows)))}
 function makeCode(){return crypto.randomBytes(5).toString('hex').toUpperCase()}
-function normalizeReferralCode(value){
- let v=String(value||'').trim();
- if(!v)return '';
- // Telegram may pass ref_<CODE>, referral_<CODE>, or the raw referral code.
- v=v.replace(/^ref(?:erral)?[_:-]/i,'');
- return v.replace(/[^A-Za-z0-9]/g,'').slice(0,64);
-}
 async function getUser(body){
  const telegramId = String(body.telegram_id || body.telegramId || '');
  if(!telegramId) throw new Error('telegram_id required');
- const incomingRef=normalizeReferralCode(body.referrer_code || body.start_param || body.referral_code);
  let u = await get('SELECT * FROM users WHERE telegram_id=?',[telegramId]);
  if(!u){
   let code; do{code=makeCode()}while(await get('SELECT id FROM users WHERE referral_code=?',[code]));
-  let validRef=null;
-  if(incomingRef){
-   const ref=await get('SELECT id,telegram_id FROM users WHERE referral_code=?',[incomingRef]);
-   if(ref && String(ref.telegram_id)!==telegramId) validRef=ref;
-  }
-  await run('INSERT INTO users(telegram_id,username,first_name,last_name,referral_code,referrer_code) VALUES(?,?,?,?,?,?)',[telegramId,body.username||'',body.first_name||'',body.last_name||'',code,validRef?incomingRef:null]);
+  await run('INSERT INTO users(telegram_id,username,first_name,last_name,referral_code,referrer_code) VALUES(?,?,?,?,?,?)',[telegramId,body.username||'',body.first_name||'',body.last_name||'',code,body.referrer_code||null]);
   u=await get('SELECT * FROM users WHERE telegram_id=?',[telegramId]);
-  if(validRef){
-   await run('UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?',[validRef.id]);
+  if(body.referrer_code && body.referrer_code!==u.referral_code){
+   const ref=await get('SELECT id FROM users WHERE referral_code=?',[body.referrer_code]);
+   if(ref){await run('UPDATE users SET referrals=referrals+1 WHERE id=?',[ref.id]);}
   }
  } else {
-  // A user may have opened the app before using a referral link. Bind the first
-  // valid referral code later, but never overwrite an existing referrer.
-  if(!u.referrer_code && incomingRef){
-   const ref=await get('SELECT id,telegram_id FROM users WHERE referral_code=?',[incomingRef]);
-   if(ref && ref.id!==u.id && String(ref.telegram_id)!==telegramId){
-    await run('UPDATE users SET referrer_code=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[incomingRef,u.id]);
-    await run('UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?',[ref.id]);
-    u=await get('SELECT * FROM users WHERE id=?',[u.id]);
-   }
-  }
   await run('UPDATE users SET username=?,first_name=?,last_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[body.username||u.username,body.first_name||u.first_name,body.last_name||u.last_name,u.id]);
   u=await get('SELECT * FROM users WHERE id=?',[u.id]);
  }
- // Keep referral counters derived from the actual referral links, so the UI never
- // gets stuck at 0 after a valid referral.
- const refCount=await get('SELECT COUNT(*) AS c FROM users WHERE referrer_code=?',[u.referral_code]);
- const successCount=await get('SELECT COUNT(*) AS c FROM users WHERE referrer_code=? AND verified=1',[u.referral_code]);
- await run('UPDATE users SET referrals=?, successful_referrals=? WHERE id=?',[Number(refCount?.c||0),Number(successCount?.c||0),u.id]);
- u=await get('SELECT * FROM users WHERE id=?',[u.id]);
  return u;
 }
 function publicUser(u){return {id:u.telegram_id,username:u.username,firstName:u.first_name,lastName:u.last_name,referralCode:u.referral_code,referrerCode:u.referrer_code,wallet:u.wallet_address||'',walletType:u.wallet_type||'',verified:!!u.verified,balance:u.balance,taps:u.total_taps,referrals:u.referrals,successfulReferrals:u.successful_referrals,referralReward:u.referral_reward||0,teamWallet:Number(u.team_wallet||0),pendingMining:Number(u.pending_mining||0),level:u.miner_level,sound:!!u.sound}}
@@ -256,22 +229,29 @@ async function verifyTonProof({address:addressText,network,public_key,walletStat
  return true;
 }
 
-app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const mineKey='mine_'+u.id+'_'+today; const mineMeta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[mineKey]); const mineTaps=Number(mineMeta?.amount||0); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL},mineDay:today,mineTaps:mineTaps})}catch(e){res.status(400).json({ok:false,error:e.message})}});
+app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); const mineMeta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,mineDay:today,mineTaps:Number(mineMeta?.taps||0),deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL}})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/mine',async(req,res)=>{try{
  const u=await getUser(req.body);
  const today=new Date().toISOString().slice(0,10);
- const key='mine_'+u.id+'_'+today;
- let used=0;
- const meta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[key]);
- if(meta)used=Number(meta.amount)||0;
- if(used>=5000)return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached'});
- const reward=0.01*(1+Math.max(0,Number(u.miner_level||1)-1)*0.02);
- await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
- if(meta) await run('UPDATE deposits SET amount=amount+? WHERE tx_hash=?',[1,key]);
- else await run('INSERT INTO deposits(user_id,tx_hash,amount,asset,network,status) VALUES(?,?,?,?,?,?)',[u.id,key,1,'TAPS','LOCAL','Counter']);
+ const meta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]);
+ const used=Number(meta?.taps||0);
+ const LIMIT=5000;
+ if(used>=LIMIT)return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached',mineTaps:used,remaining:0,mineDay:today});
+ const reward=.01*(1+Math.max(0,Number(u.miner_level||1)-1)*.02);
+ await run('BEGIN IMMEDIATE');
+ try{
+  const locked=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]);
+  const lockedUsed=Number(locked?.taps||0);
+  if(lockedUsed>=LIMIT){await run('ROLLBACK');return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached',mineTaps:lockedUsed,remaining:0,mineDay:today});}
+  if(locked) await run('UPDATE mine_daily SET taps=taps+1 WHERE user_id=? AND day=?',[u.id,today]);
+  else await run('INSERT INTO mine_daily(user_id,day,taps) VALUES(?,?,1)',[u.id,today]);
+  await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
+  await run('COMMIT');
+ }catch(e){try{await run('ROLLBACK')}catch(_){ } throw e;}
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
- res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,remaining:4999-used});
+ const count=used+1;
+ res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,mineDay:today,mineTaps:count,remaining:LIMIT-count});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/claim',async(req,res)=>{try{
@@ -316,15 +296,21 @@ app.post('/api/wallet/connect',async(req,res)=>res.status(400).json({ok:false,er
 app.post('/api/verify-wallet',async(req,res)=>res.status(400).json({ok:false,error:'Wallet verification is performed automatically by TON Connect proof.'}));
 app.post('/api/wallet/disconnect',async(req,res)=>{try{const u=await getUser(req.body);await run('UPDATE users SET wallet_address=NULL,wallet_type=NULL,verified=0,updated_at=CURRENT_TIMESTAMP WHERE id=?',[u.id]);const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,user:publicUser(fresh)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
-async function telegramMemberStatus(userId, chat){
- if(!BOT_TOKEN) return {ok:false,configured:false,status:'unknown',description:'Telegram verification is not configured. Add TELEGRAM_BOT_TOKEN in Render Environment.'};
- let target=String(chat||'').trim();
- if(target.startsWith('https://t.me/')){target=target.replace('https://t.me/','').replace(/^\+/,'');if(target.includes('/'))target=target.split('/')[0];if(target.startsWith('+'))return {ok:false,configured:false,status:'unknown',description:'Private invite channel needs its numeric Telegram chat ID in EARN_CHANNEL_CHAT_ID'};}
- const url=`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(target)}&user_id=${encodeURIComponent(userId)}`;
- const r=await fetch(url); const j=await r.json().catch(()=>({})); if(!j.ok)return {ok:false,configured:true,status:'unknown',description:j.description||'Telegram membership check failed'};
- const st=j.result?.status; return {ok:true,configured:true,status:st,joined:['creator','administrator','member','restricted'].includes(st)};
-}
-app.post('/api/tasks/telegram-verify',async(req,res)=>{try{const u=await getUser(req.body); if(!u.wallet_address)return res.status(400).json({ok:false,error:'Connect wallet before task verification'}); const task=await get('SELECT * FROM tasks WHERE id=?',[req.body.task_id]);if(!task||task.type!=='telegram')throw new Error('Telegram task not found'); const targetChat=task.id==='earn_channel'?(process.env.EARN_CHANNEL_CHAT_ID||task.channel):(process.env.OFFICIAL_CHANNEL_CHAT_ID||task.channel); const st=await telegramMemberStatus(u.telegram_id,targetChat); if(!st.configured)return res.status(503).json({ok:false,error:st.description||'Telegram bot verification is not configured on the server'}); if(!st.joined)return res.status(400).json({ok:false,error:'Not joined yet. Join the channel, then tap Verify again.',status:st.status}); const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]); if(claim)return res.json({ok:true,already:true,user:publicUser(u)}); const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]); await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]); await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward); const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
+// Channel tasks intentionally use a lightweight one-time claim flow.
+// We open the channel for the user, then credit the reward once per task.
+// No Telegram Bot API membership check is required, so rewards are not blocked by
+// missing BOT_TOKEN/private-channel permissions.
+app.post('/api/tasks/telegram-verify',async(req,res)=>{try{
+ const u=await getUser(req.body);
+ const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
+ if(!task||task.type!=='telegram')throw new Error('Telegram task not found');
+ const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]);
+ if(claim)return res.json({ok:true,already:true,user:publicUser(u),reward:0});
+ const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]);
+ await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]);
+ await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward);
+ const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
+ res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/tasks/claim',async(req,res)=>{try{const u=await getUser(req.body);const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
