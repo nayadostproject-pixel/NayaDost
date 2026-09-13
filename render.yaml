@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: NayaDost
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeployTrigger: commit
