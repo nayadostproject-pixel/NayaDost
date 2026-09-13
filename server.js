@@ -14,7 +14,7 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(express.json({limit:'256kb'}));
 app.use(express.urlencoded({extended:true}));
-// Cross-origin support for the NayaDost Mini App and API
+// Cross-origin support: the Mini App may be hosted on Netlify while this Node API
 // runs on Render/Railway/VPS. Telegram init-data headers must be explicitly allowed.
 app.use((req,res,next)=>{
  res.setHeader('Access-Control-Allow-Origin','*');
@@ -37,7 +37,10 @@ app.get('/tonconnect-manifest.json',(req,res)=>{
    iconUrl:base+'/icon-180.png'
  }));
 });
-app.use(express.static(path.join(__dirname, 'public')));
+app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
+app.get('/index.html',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
+app.get('/admin.html',(req,res)=>res.sendFile(path.join(__dirname,'admin.html')));
+app.get('/icon-180.png',(req,res)=>res.sendFile(path.join(__dirname,'icon-180.png')));
 
 const PORT = Number(process.env.PORT || 3000);
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
@@ -412,5 +415,5 @@ app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegra
 app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
 app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
+app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
 app.listen(PORT,()=>console.log(`NayaDost Mining running on http://localhost:${PORT}`));
