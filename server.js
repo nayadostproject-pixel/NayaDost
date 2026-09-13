@@ -141,12 +141,6 @@ async function getUser(body){
   await run('UPDATE users SET username=?,first_name=?,last_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[body.username||u.username,body.first_name||u.first_name,body.last_name||u.last_name,u.id]);
   u=await get('SELECT * FROM users WHERE id=?',[u.id]);
  }
- // Keep referral counters derived from the actual referral links, so the UI never
- // gets stuck at 0 after a valid referral.
- const refCount=await get('SELECT COUNT(*) AS c FROM users WHERE referrer_code=?',[u.referral_code]);
- const successCount=await get('SELECT COUNT(*) AS c FROM users WHERE referrer_code=? AND verified=1',[u.referral_code]);
- await run('UPDATE users SET referrals=?, successful_referrals=? WHERE id=?',[Number(refCount?.c||0),Number(successCount?.c||0),u.id]);
- u=await get('SELECT * FROM users WHERE id=?',[u.id]);
  return u;
 }
 function publicUser(u){return {id:u.telegram_id,username:u.username,firstName:u.first_name,lastName:u.last_name,referralCode:u.referral_code,referrerCode:u.referrer_code,wallet:u.wallet_address||'',walletType:u.wallet_type||'',verified:!!u.verified,balance:u.balance,taps:u.total_taps,referrals:u.referrals,successfulReferrals:u.successful_referrals,referralReward:u.referral_reward||0,teamWallet:Number(u.team_wallet||0),pendingMining:Number(u.pending_mining||0),level:u.miner_level,sound:!!u.sound}}
