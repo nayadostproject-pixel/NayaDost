@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const { Address, Cell, contractAddress, loadStateInit, WalletContractV1R1, WalletContractV1R2, WalletContractV1R3, WalletContractV2R1, WalletContractV2R2, WalletContractV3R1, WalletContractV3R2, WalletContractV4, WalletContractV5R1 } = require('@ton/ton');
+const { Address, Cell, beginCell, contractAddress, loadStateInit, WalletContractV1R1, WalletContractV1R2, WalletContractV1R3, WalletContractV2R1, WalletContractV2R2, WalletContractV3R1, WalletContractV3R2, WalletContractV4, WalletContractV5R1 } = require('@ton/ton');
 const { sha256, getSecureRandomBytes } = require('@ton/crypto');
 const nacl = require('tweetnacl');
 require('dotenv').config();
@@ -42,6 +42,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const PORT = Number(process.env.PORT || 3000);
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'CHANGE_ME_NOW';
+const BOT_API_KEY = process.env.BOT_API_KEY || '';
 const OFFICIAL_CHANNEL = process.env.OFFICIAL_CHANNEL || '@NYDEarn_Official';
 const EARN_CHANNEL = process.env.EARN_CHANNEL || 'https://t.me/+9-jDg9aDMOphNzdl';
 const DEPOSIT_ADDRESS = process.env.DEPOSIT_ADDRESS || 'UQCx6kQYSADRJEjejFFttCNo12pjdquaOMhrXn8zYuF1wTvX';
@@ -77,6 +78,7 @@ const dbPath = process.env.DB_PATH || path.join(persistentDataDir,'naya_dost.sql
 const db = new sqlite3.Database(dbPath);
 console.log('[DB] SQLite database:', dbPath);
 db.configure('busyTimeout', 10000);
+try { db.run('PRAGMA journal_mode=WAL'); db.run('PRAGMA synchronous=NORMAL'); } catch(e) { console.warn('[DB] PRAGMA setup:', e.message); }
 db.run('PRAGMA journal_mode=WAL');
 db.run('PRAGMA synchronous=NORMAL');
 
@@ -241,6 +243,20 @@ async function verifyTonProof({address:addressText,network,public_key,walletStat
  return true;
 }
 
+app.post('/api/bot/user',async(req,res)=>{try{
+ if(!BOT_API_KEY || req.get('X-Bot-Api-Key')!==BOT_API_KEY)return res.status(401).json({ok:false,error:'Unauthorized'});
+ const u=await getUser(req.body);
+ res.json({ok:true,user:publicUser(u)});
+}catch(e){res.status(400).json({ok:false,error:e.message})}});
+
+app.post('/api/bot/referral',async(req,res)=>{try{
+ if(!BOT_API_KEY || req.get('X-Bot-Api-Key')!==BOT_API_KEY)return res.status(401).json({ok:false,error:'Unauthorized'});
+ const telegram_id=String(req.body.telegram_id||''); const referrer_code=String(req.body.referrer_code||'').trim();
+ if(!telegram_id||!referrer_code)throw new Error('telegram_id and referrer_code required');
+ const u=await getUser({telegram_id,username:req.body.username||'',first_name:req.body.first_name||'',last_name:req.body.last_name||'',referrer_code});
+ res.json({ok:true,user:publicUser(u)});
+}catch(e){res.status(400).json({ok:false,error:e.message})}});
+
 app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); const mineMeta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,mineDay:today,mineTaps:Number(mineMeta?.taps||0),dailyTaps:Number(mineMeta?.taps||0),serverTime:new Date().toISOString(),deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL}})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/mine',async(req,res)=>{try{
@@ -309,10 +325,7 @@ app.post('/api/wallet/connect',async(req,res)=>res.status(400).json({ok:false,er
 app.post('/api/verify-wallet',async(req,res)=>res.status(400).json({ok:false,error:'Wallet verification is performed automatically by TON Connect proof.'}));
 app.post('/api/wallet/disconnect',async(req,res)=>{try{const u=await getUser(req.body);await run('UPDATE users SET wallet_address=NULL,wallet_type=NULL,verified=0,updated_at=CURRENT_TIMESTAMP WHERE id=?',[u.id]);const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,user:publicUser(fresh)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
-// Channel tasks intentionally use a lightweight one-time claim flow.
-// We open the channel for the user, then credit the reward once per task.
-// No Telegram Bot API membership check is required, so rewards are not blocked by
-// missing BOT_TOKEN/private-channel permissions.
+// Telegram channel tasks are verified server-side with Bot API membership checks.
 
 async function telegramApi(method, params={}){
  const token=BOT_TOKEN;
@@ -468,6 +481,33 @@ app.post('/api/level-payment/details',async(req,res)=>{try{
  if(!p)throw new Error('Payment invoice not found');
  if(p.status==='Confirmed'){const payAmount=p.asset==='TON'?Number(p.amount_units)/1e9:Number(p.amount_units)/1e6;return res.json({ok:true,payment:{...p,payAmount,usdtMaster:USDT_MASTER}})}
  const payAmount=p.asset==='TON'?Number(p.amount_units)/1e9:Number(p.amount_units)/1e6; res.json({ok:true,payment:{...p,payAmount,usdtMaster:USDT_MASTER}});
+}catch(e){res.status(400).json({ok:false,error:e.message})}});
+
+app.post('/api/level-payment/transaction',async(req,res)=>{try{
+ const u=await getUser(req.body);
+ const p=await get('SELECT * FROM level_payments WHERE invoice=? AND user_id=?',[req.body.invoice,u.id]);
+ if(!p)throw new Error('Payment invoice not found');
+ if(p.status!=='Pending')throw new Error('This payment invoice is no longer pending');
+ if(!u.wallet_address||!u.verified)throw new Error('Connect and verify your TON wallet first');
+ if(!paymentAgeOk(p))throw new Error('Payment invoice expired. Create a new payment.');
+ if(p.asset==='TON') return res.json({ok:true,message:{address:p.recipient,amount:String(p.amount_units)}});
+ const sender=rawAddress(u.wallet_address), master=rawAddress(USDT_MASTER);
+ const qs=new URLSearchParams({owner_address:u.wallet_address,jetton_address:USDT_MASTER,limit:'100'});
+ const data=await fetchTonCenter(`${TONCENTER_BASE_URL}/jetton/wallets?${qs}`);
+ const wallets=data.jetton_wallets||[];
+ const wallet=wallets.find(x=>rawAddress(x.jetton||x.jetton_address||x.master)===master) || wallets[0];
+ if(!wallet?.address)throw new Error('USDT wallet was not found for your connected wallet. Receive some USDT on TON first.');
+ const body=beginCell()
+   .storeUint(0x0f8a7ea5,32)
+   .storeUint(0,64)
+   .storeCoins(BigInt(p.amount_units))
+   .storeAddress(Address.parse(p.recipient))
+   .storeAddress(Address.parse(u.wallet_address))
+   .storeBit(0)
+   .storeCoins(50000000n)
+   .storeBit(0)
+   .endCell().toBoc().toString('base64');
+ res.json({ok:true,message:{address:wallet.address,amount:'50000000',payload:body},asset:'USDT'});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/level-payment/confirm',async(req,res)=>{try{

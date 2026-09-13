@@ -1,191 +1,130 @@
-from dotenv import load_dotenv
-load_dotenv()
 import os
-import json
-import random
-import string
-from pathlib import Path
+import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 
-API_BASE_URL = os.getenv("API_BASE_URL", os.getenv("WEB_APP_URL", "")).rstrip("/")
-BOT_API_KEY = os.getenv("BOT_API_KEY", "")
-WEB_APP_URL = os.getenv("WEB_APP_URL", "")
+WEB_APP_URL = os.getenv('WEB_APP_URL', 'https://nayadost-3.onrender.com/')
+API_BASE_URL = os.getenv('API_BASE_URL', 'https://nayadost-3.onrender.com').rstrip('/')
+BOT_API_KEY = os.getenv('BOT_API_KEY', '')
+BOT_TOKEN = os.getenv('BOT_TOKEN', '')
 
-def api_user(tg_user, ref_code=None):
-    if not API_BASE_URL or not BOT_API_KEY:
-        raise RuntimeError("API_BASE_URL and BOT_API_KEY are required")
-    import urllib.request
-    import json as _json
-    payload={
-        "telegram_id":str(tg_user.id),
-        "username":tg_user.username or "",
-        "first_name":tg_user.first_name or "",
-        "last_name":tg_user.last_name or "",
-        "referrer_code":ref_code or ""
-    }
-    req=urllib.request.Request(API_BASE_URL+"/bot/user",data=_json.dumps(payload).encode(),headers={"Content-Type":"application/json","X-Bot-Api-Key":BOT_API_KEY},method="POST")
-    with urllib.request.urlopen(req,timeout=15) as r:
-        data=_json.loads(r.read().decode())
-    if not data.get("ok"):
-        raise RuntimeError(data.get("error","API error"))
-    u=data["user"]
-    return {
-        "telegram_id":u.get("id",tg_user.id), "name":u.get("firstName",tg_user.first_name or ""),
-        "username":u.get("username",tg_user.username or ""), "referral_code":u.get("referralCode",""),
-        "referred_by":u.get("referrerCode") or "", "referral_count":u.get("referrals",0),
-        "referral_earned":u.get("referralReward",0), "balance":u.get("balance",0), "tap_count":u.get("taps",0)
-    }
 
-def get_or_create_user(tg_user, ref_code=None):
-    return api_user(tg_user, ref_code), False
+def backend(path, payload):
+    r = requests.post(
+        API_BASE_URL + path,
+        json=payload,
+        headers={'X-Bot-Api-Key': BOT_API_KEY, 'Content-Type': 'application/json'},
+        timeout=15,
+    )
+    data = r.json()
+    if not r.ok or not data.get('ok'):
+        raise RuntimeError(data.get('error', f'Backend error {r.status_code}'))
+    return data
 
-def main_keyboard():
-    buttons = []
 
-    if WEB_APP_URL:
-        buttons.append([
-            InlineKeyboardButton(
-                "🚀 Open NayaDost Mining",
-                web_app=WebAppInfo(url=WEB_APP_URL)
-            )
-        ])
+def keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton('🚀 Open NayaDost Mining', web_app=WebAppInfo(url=WEB_APP_URL))],
+        [InlineKeyboardButton('💰 Balance', callback_data='balance')],
+    ])
 
-    buttons += [
-        [
-            InlineKeyboardButton("💰 Balance", callback_data="balance"),
-            InlineKeyboardButton("👥 Referral", callback_data="referral")
-        ]
-    ]
-
-    return InlineKeyboardMarkup(buttons)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    tg_user = update.effective_user
-    ref_code = context.args[0] if context.args else None
-
-    user, created = get_or_create_user(tg_user, ref_code)
-
-    text = (
-        f"👋 Welcome, {tg_user.first_name}!\n\n"
-        "⛏️ *NayaDost Mining*\n\n"
-        f"💰 Demo NYD Balance: `{user['balance']:.2f}`\n"
-        f"👥 Referrals: `{user['referral_count']}`\n\n"
-        "Tap, complete tasks and invite friends.\n"
-        "This is an educational/demo app — no guaranteed profit."
-    )
-
+    u = update.effective_user
+    ref = context.args[0].strip() if context.args else ''
+    try:
+        data = backend('/api/bot/referral' if ref else '/api/bot/user', {
+            'telegram_id': str(u.id),
+            'username': u.username or '',
+            'first_name': u.first_name or '',
+            'last_name': u.last_name or '',
+            'referrer_code': ref,
+        })
+        user = data['user']
+    except Exception as e:
+        await update.message.reply_text(f'Backend temporarily unavailable: {e}')
+        return
     await update.message.reply_text(
-        text,
-        parse_mode="Markdown",
-        reply_markup=main_keyboard()
+        f'👋 Welcome, {u.first_name}!\n\n'
+        f'⛏️ *NayaDost Mining*\n\n'
+        f'💰 Balance: `{float(user.get("balance", 0)):.4f} NYD`\n'
+        f'👥 Referrals: `{int(user.get("referrals", 0))}`\n\n'
+        'Open the Mini App to mine, complete tasks, manage your wallet and withdrawals.',
+        parse_mode='Markdown',
+        reply_markup=keyboard(),
     )
+
+
+async def callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    await q.answer()
+    if q.data == 'balance':
+        u = q.from_user
+        try:
+            data = backend('/api/bot/user', {'telegram_id': str(u.id), 'username': u.username or '', 'first_name': u.first_name or '', 'last_name': u.last_name or ''})
+            user = data['user']
+            await q.message.reply_text(f'💰 Balance: `{float(user.get("balance", 0)):.4f} NYD`', parse_mode='Markdown', reply_markup=keyboard())
+        except Exception as e:
+            await q.message.reply_text(f'Unable to read balance: {e}')
+
 
 async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user, _ = get_or_create_user(update.effective_user)
+    u = update.effective_user
+    try:
+        data = backend('/api/bot/user', {'telegram_id': str(u.id), 'username': u.username or '', 'first_name': u.first_name or '', 'last_name': u.last_name or ''})
+        user = data['user']
+        await update.message.reply_text(
+            f'💰 *NYD Balance*\n\n`{float(user.get("balance", 0)):.4f} NYD`\n\n'
+            f'👥 Referrals: `{int(user.get("referrals", 0))}`\n'
+            f'⛏️ Total taps: `{int(user.get("taps", 0))}`',
+            parse_mode='Markdown', reply_markup=keyboard()
+        )
+    except Exception as e:
+        await update.message.reply_text(f'Unable to read balance: {e}')
 
-    await update.message.reply_text(
-        f"💰 *Your Balance*\n\n"
-        f"🪙 NYD Demo Credits: `{user['balance']:.2f}`\n\n"
-        "Demo credits only.",
-        parse_mode="Markdown",
-        reply_markup=main_keyboard()
-    )
 
 async def referral(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user, _ = get_or_create_user(update.effective_user)
+    u = update.effective_user
+    try:
+        data = backend('/api/bot/user', {'telegram_id': str(u.id), 'username': u.username or '', 'first_name': u.first_name or '', 'last_name': u.last_name or ''})
+        user = data['user']
+        me = await context.bot.get_me()
+        link = f'https://t.me/{me.username}?start={user["referralCode"]}'
+        await update.message.reply_text(
+            f'👥 *Referral Program*\n\n'
+            f'Your code: `{user["referralCode"]}`\n'
+            f'Total referrals: `{int(user.get("referrals", 0))}`\n'
+            f'Successful referrals: `{int(user.get("successfulReferrals", 0))}`\n'
+            f'Rewards: `{int(user.get("referralReward", 0))}`\n\n'
+            f'🔗 {link}', parse_mode='Markdown'
+        )
+    except Exception as e:
+        await update.message.reply_text(f'Unable to create referral link: {e}')
 
-    me = await context.bot.get_me()
-    link = f"https://t.me/{me.username}?start={user['referral_code']}"
-
-    await update.message.reply_text(
-        f"👥 *Referral Program*\n\n"
-        f"Your code: `{user['referral_code']}`\n"
-        f"Successful referrals: `{user['referral_count']}`\n"
-        f"Referral demo credits: `{user['referral_earned']}`\n\n"
-        f"🔗 Your referral link:\n{link}\n\n"
-        "Referral rewards are demo credits only.",
-        parse_mode="Markdown"
-    )
-
-async def rewards(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🎁 *Daily Rewards*\n\n"
-        "⛏️ Daily tap reward: 0.01 NYD demo credits\n"
-        "👥 Referral reward: 50 NYD demo credits\n\n"
-        "No real-money withdrawals or guaranteed profit.",
-        parse_mode="Markdown"
-    )
-
-async def tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "📋 *Tasks*\n\n"
-        "1️⃣ Daily Tap Mining\n"
-        "2️⃣ Check Rewards\n"
-        "3️⃣ Invite Friends\n\n"
-        "More demo tasks can be added later.",
-        parse_mode="Markdown"
-    )
-
-async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user, _ = get_or_create_user(update.effective_user)
-
-    username = f"@{user['username']}" if user["username"] else "No username"
-
-    await update.message.reply_text(
-        f"👤 *Profile*\n\n"
-        f"Name: {user['name']}\n"
-        f"Username: {username}\n"
-        f"Telegram ID: `{user['telegram_id']}`\n"
-        f"NYD Balance: `{user['balance']:.2f}`\n"
-        f"Referrals: `{user['referral_count']}`",
-        parse_mode="Markdown"
-    )
 
 async def home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await start(update, context)
 
+
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "ℹ️ *NayaDost Mining Help*\n\n"
-        "/start — Start the bot\n"
-        "/home — Open dashboard\n"
-        "/balance — Check balance\n"
-        "/referral — Referral link\n"
-        "/rewards — Daily rewards\n"
-        "/tasks — Tasks\n"
-        "/profile — Telegram profile\n"
-        "/help — Help\n\n"
-        "NYD shown here is demo/educational credit.",
-        parse_mode="Markdown",
-        reply_markup=main_keyboard()
-    )
+    await update.message.reply_text('/start — Open NayaDost\n/balance — Balance\n/referral — Referral link\n/help — Help', reply_markup=keyboard())
 
-def run():
-    token = os.getenv("BOT_TOKEN")
 
-    if not token:
-        print("BOT_TOKEN not found.")
-        print("Make sure .env is configured or set BOT_TOKEN.")
-        return
-
-    app = Application.builder().token(token).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("home", home))
-    app.add_handler(CommandHandler("balance", balance))
-    app.add_handler(CommandHandler("referral", referral))
-    app.add_handler(CommandHandler("rewards", rewards))
-    app.add_handler(CommandHandler("tasks", tasks))
-    app.add_handler(CommandHandler("profile", profile))
-    app.add_handler(CommandHandler("help", help_cmd))
-
-    print("===================================")
-    print(" NayaDost Mining Bot")
-    print(" Bot is starting...")
-    print("===================================")
-
+def main():
+    if not BOT_TOKEN:
+        raise SystemExit('BOT_TOKEN is missing')
+    if not BOT_API_KEY:
+        raise SystemExit('BOT_API_KEY is missing')
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler('start', start))
+    app.add_handler(CommandHandler('home', home))
+    app.add_handler(CommandHandler('balance', balance))
+    app.add_handler(CommandHandler('referral', referral))
+    app.add_handler(CommandHandler('help', help_cmd))
+    app.add_handler(CallbackQueryHandler(callback))
+    print('NayaDost Mining bot started — backend is the single source of truth.')
     app.run_polling()
 
-if __name__ == "__main__":
-    run()
+
+if __name__ == '__main__':
+    main()
