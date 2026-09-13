@@ -1,0 +1,21 @@
+name = "nayadost-app"
+main = "worker.js"
+compatibility_date = "2026-09-13"
+workers_dev = true
+
+# Create a D1 database first:
+#   npx wrangler d1 create naya-dost-db
+# Then replace DATABASE_ID below with the returned database_id.
+[[d1_databases]]
+binding = "DB"
+database_name = "naya-dost-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[vars]
+APP_URL = "https://nayadost-app.nayadost-db.workers.dev"
+OFFICIAL_CHANNEL = "@NYDEarn_Official"
+EARN_CHANNEL = "https://t.me/+9-jDg9aDMOphNzdl"
+DEPOSIT_ADDRESS = "UQCx6kQYSADRJEjejFFttCNo12pjdquaOMhrXn8zYuF1wTvX"
+REFERRAL_RATES = "5,3,2,1,0.5"
+REFERRAL_MAX_TOTAL = "15"
+NYD_PRICE_FALLBACK = "0.001"

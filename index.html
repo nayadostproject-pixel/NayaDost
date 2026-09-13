@@ -1,23 +1,303 @@
-<!DOCTYPE html><html lang="en"><head>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NYD Miner - Theme 4</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700;800&display=swap" rel="stylesheet">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#020817">
+<meta name="mobile-web-app-capable" content="yes">
+<title>NayaDost Mining</title>
 <style>
-body{margin:0;min-height:100vh;background:linear-gradient(135deg,#5a18c9 0%,#2a0a5c 40%,#ff6a00 100%);background-attachment:fixed;color:#fff;font-family:'Fredoka',sans-serif}
-.app{max-width:420px;margin:0 auto;padding:12px 14px 90px}
-.card{background:linear-gradient(180deg,#3e1a8a,#2a1155);border:2px solid #7a4dff;border-radius:22px;padding:16px;margin-top:14px;box-shadow:0 0 20px rgba(122,77,255,.5);text-align:center}
-.coin{width:130px;height:130px;margin:14px auto;background:radial-gradient(circle at 30% 30%,#fff7a0,#ffcc00 30%,#ff8a00 70%);border-radius:50%;border:4px solid #fff;display:grid;place-items:center;font-size:42px;color:#5a2a00;box-shadow:0 0 30px rgba(255,170,0,.8),0 8px 0 #c45200}
-.btn{width:100%;border:0;padding:14px;border-radius:30px;font-family:'Fredoka';font-size:18px;font-weight:800;background:linear-gradient(90deg,#ff7a1a,#ffae00);color:#fff;border:2px solid #fff;box-shadow:0 5px 0 #c45200}
-.nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:92%;max-width:400px;background:rgba(26,8,51,.95);border:2px solid #7a4dff;border-radius:20px;display:grid;grid-template-columns:repeat(5,1fr);height:70px}
-.nav button{background:none;border:0;color:#8ea5dc;font-size:10px}
-.nav button.active{color:#ffae00}
-.nav button span{display:block;font-size:20px}
-</style></head><body>
-<div class="app">
-<div style="display:flex;justify-content:space-between"><div style="font-size:26px;color:#ffd86a">NYD</div><div style="background:rgba(0,0,0,.3);padding:6px 10px;border-radius:20px;border:1px solid #ffae00;font-size:11px">● READY</div></div>
-<div class="card"><div style="letter-spacing:2px;font-size:11px;color:#ffae7a">TOTAL BALANCE</div><div style="font-size:38px" id="bal">11.8845 <span style="font-size:20px;color:#ffae00">NYD</span></div><div class="coin">NYD</div><div style="color:#22ff88">⛏️ Mining Active</div><div style="font-size:12px;opacity:.8">0.20 TH/s • +0.0005 NYD/sec</div><button class="btn" onclick="claim()">CLAIM REWARD</button></div>
+:root{
+  --bg:#010611;--bg2:#03162e;--card:#061b38;--card2:#09294b;--line:#1857a5;
+  --blue:#168cff;--cyan:#24dcff;--purple:#7b45ff;--pink:#f13cff;--green:#12ef8b;
+  --yellow:#ffd21a;--red:#ff4d78;--text:#f5f8ff;--muted:#89a7ce;--nav:#02091a;
+  --shadow:0 0 24px rgba(0,123,255,.28),inset 0 0 22px rgba(0,95,255,.08)
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:#00040d;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{overflow-x:hidden}
+button,input{font:inherit}button{border:0;cursor:pointer;color:#fff}button:disabled{cursor:not-allowed;opacity:.55}
+.app{position:relative;width:100%;max-width:480px;min-height:100vh;margin:auto;overflow:hidden;background:
+ radial-gradient(circle at 50% 22%,rgba(7,91,184,.24),transparent 30%),
+ radial-gradient(circle at 50% 85%,rgba(92,0,255,.18),transparent 30%),linear-gradient(180deg,#03142a,#010713 65%,#00030a);box-shadow:0 0 100px #000}
+.app:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:linear-gradient(rgba(20,113,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(20,113,255,.12) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,transparent,#000 25%,#000 80%,transparent)}
+.screen{display:none;min-height:100vh;padding:10px 12px calc(94px + env(safe-area-inset-bottom));position:relative;z-index:1}.screen.active{display:block}
+.header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:8px}.brand{display:flex;align-items:center;gap:9px;min-width:0}.logo{width:37px;height:37px;border-radius:50%;display:grid;place-items:center;font-weight:1000;background:linear-gradient(135deg,#8b4cff,#00d9ff);box-shadow:0 0 18px #087dff}.brand-name{font-weight:950;font-size:14px;white-space:nowrap}.verified{color:var(--cyan)}.subtitle,.small{font-size:10px;color:var(--muted)}.header-actions{display:flex;gap:6px}.header-btn,.wallet-btn{border:1px solid #3b43ff;border-radius:18px;padding:8px 11px;background:linear-gradient(135deg,#2715a9,#702cff);font-size:11px;font-weight:850;box-shadow:0 0 14px rgba(96,48,255,.35)}.header-btn{padding:8px 10px}
+.card{margin:9px 0;padding:12px;border-radius:15px;border:1px solid #124e98;background:linear-gradient(145deg,rgba(8,41,75,.94),rgba(3,17,37,.96));box-shadow:var(--shadow)}
+.profile{display:flex;align-items:center;gap:10px}.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:linear-gradient(135deg,#ffd36b,#693cff);box-shadow:0 0 15px #4d3cff55}.username{font-weight:900;font-size:13px}.handle{font-size:9px;color:var(--muted);margin-top:2px}.badge{margin-left:auto;padding:5px 8px;border-radius:16px;background:#0b6f52;color:#d9fff2;font-size:9px;font-weight:850;border:1px solid #0ee78b55}
+.balance{display:flex;align-items:center;gap:12px;margin-top:12px}.coin{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:950;color:#7a3500;background:radial-gradient(circle,#ffe76a,#ff9900);box-shadow:0 0 18px #ffb00066}.label{font-size:9px;color:#91acd0;text-transform:uppercase;letter-spacing:.5px}.balance-number{font-size:25px;font-weight:1000;line-height:1.1}.balance-number .unit{color:var(--cyan)}.green{color:var(--green)}.wallet-icon{margin-left:auto;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:#5b50ed;font-size:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.stat{background:#061a37;border:1px solid #104a78;border-radius:10px;text-align:center;padding:7px 3px}.stat strong{display:block;font-size:11px}.stat span{color:#83a3c7;font-size:8px}
+.mine-box{text-align:center;border-radius:17px;padding:14px 10px;margin-bottom:9px;background:radial-gradient(circle at 50% 45%,#11549d 0,#061f48 36%,#031124 72%);border:1px solid #1872b9;overflow:hidden;position:relative}.mine-box:after{content:"";position:absolute;left:15%;right:15%;bottom:34px;height:2px;background:linear-gradient(90deg,transparent,#18dfff,transparent);box-shadow:0 0 18px #18dfff}.mine-circle{width:185px;height:185px;margin:0 auto 7px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#19eaff 0,#0789f2 22%,#071e62 52%,transparent 70%);box-shadow:0 0 18px #008cff,0 0 55px rgba(0,153,255,.45);transition:.12s}.mine-circle.hit{transform:scale(.94);filter:brightness(1.35)}.pickaxe{width:82px;height:82px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#08295c;border:2px solid #36dfff;font-size:38px;box-shadow:0 0 20px #00baff}.mine-title{font-size:16px;font-weight:950}.mine-rate{font-size:10px;color:var(--cyan);margin-top:2px}.primary{margin-top:9px;padding:11px 15px;border-radius:11px;background:linear-gradient(90deg,#0c91ff,#3459ff);border:1px solid #4dc4ff;font-weight:900;box-shadow:0 0 15px rgba(0,130,255,.3)}.primary.full{width:100%}.claim-btn{width:100%;padding:13px;border-radius:20px;background:linear-gradient(90deg,#6c16ff,#a51dff,#6426ff);font-size:17px;font-weight:1000;box-shadow:0 0 24px rgba(157,32,255,.5);border:1px solid #b76cff}
+.invite{display:flex;align-items:center;gap:9px;padding:11px;border-radius:13px;background:linear-gradient(90deg,#3d104e,#10366b);border:1px solid #693db5;cursor:pointer}.gift{font-size:25px}.invite-title{font-size:11px;font-weight:850}.arrow{margin-left:auto;font-size:22px;color:#b9a4ff}
+.section-title{font-size:13px;font-weight:950;margin:12px 2px 7px}.metric{display:grid;grid-template-columns:1fr 45px 1fr;align-items:center;text-align:center}.metric .label{text-transform:none}.metric strong{font-size:12px}.task{display:flex;align-items:center;gap:9px;padding:10px;margin:7px 0;border-radius:12px;background:linear-gradient(90deg,#071b3b,#071f44);border:1px solid #1a55ac;cursor:pointer;transition:.15s}.task:active{transform:scale(.985)}.task.yellow{border-color:#7258ff;background:linear-gradient(90deg,#24104c,#102b57)}.task-icon{width:39px;height:39px;border-radius:10px;display:grid;place-items:center;background:#082e6d;border:1px solid #4a2dff;font-size:20px;box-shadow:0 0 13px #233eff55;flex:none}.task-body{flex:1;min-width:0}.task-body strong{display:block;font-size:12px}.task-body span{display:block;font-size:9px;color:var(--muted);margin-top:2px}.go,.done,.danger-btn{padding:8px 13px;border-radius:18px;font-size:10px;font-weight:900;white-space:nowrap}.go{background:linear-gradient(90deg,#6032ff,#a12cff);box-shadow:0 0 12px #7a30ff66}.done{background:#24305c;color:#b7c4e6}.danger-btn{background:#641b36}
+.tabs{display:flex;gap:5px;margin:7px 0 11px}.tabs button{flex:1;padding:7px 4px;border-radius:10px;background:#061a37;border:1px solid #18477c;color:#a5bddc;font-size:9px}.tabs button.active{background:linear-gradient(90deg,#5322ff,#9a25ff);color:#fff;border-color:#a948ff;box-shadow:0 0 12px #8c25ff55}
+.store-head{display:flex;align-items:center;justify-content:space-between}.peak{padding:6px 9px;border-radius:16px;background:#4a214e;color:#ffb3ef;font-size:9px;font-weight:850}.chart{height:135px;margin-top:8px;border-radius:12px;border:1px solid #7445ff;background:linear-gradient(180deg,#120b38aa,#06112e);padding:7px}.chart svg{width:100%;height:100%}.chart-note{font-size:9px;color:#d6e3ff;margin-top:4px}.levels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.level{padding:8px;border-radius:14px;border:1px solid #1268d7;background:linear-gradient(145deg,#061d45,#040f28);min-height:142px;display:flex;flex-direction:column}.level-top{font-size:9px}.level-value{font-size:24px;font-weight:1000;color:#00cfff;text-align:center;margin:7px 0}.level-speed{font-size:9px;color:#d6e2fa}.level button{margin-top:auto;width:100%;padding:8px;border-radius:9px;background:linear-gradient(90deg,#4b1dff,#8b25ff);font-size:10px;font-weight:900}.level.active button{background:linear-gradient(90deg,#00baf2,#16e4ff);color:#04204a}.level.locked button{background:#171f5c}.cost{font-size:8px;color:#ffd900;text-align:center;margin-top:4px}
+.close-title{display:flex;align-items:center;gap:8px}.close{background:transparent;font-size:24px}.page-title{font-size:21px;font-weight:1000;text-align:center;flex:1}.spacer{width:24px}.friend-card{display:flex;align-items:center;gap:10px}.friend-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:#10246c;font-size:20px}.friend-main{flex:1}.friend-title{font-size:11px;font-weight:900}.friend-value{font-size:9px;color:var(--muted);margin-top:2px}.copy{padding:8px 12px;border-radius:18px;background:linear-gradient(90deg,#6c27ff,#a52cff);font-size:10px;font-weight:900}.tree{margin:20px auto 5px;max-width:340px;height:270px;position:relative;display:flex;align-items:flex-end;justify-content:center}.tree .root{position:absolute;top:8px;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#c26dff,#4511c9);box-shadow:0 0 24px #a32dff}.tree .row{position:absolute;display:flex;gap:24px}.tree .r1{top:85px}.tree .r2{top:155px;gap:17px}.tree .r3{top:220px;gap:12px}.node{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#b657ff,#211077);border:1px solid #d26aff;box-shadow:0 0 12px #8e35ff;font-size:12px}.tree:before,.tree:after{content:"";position:absolute;left:50%;top:58px;width:2px;height:190px;background:linear-gradient(#c74dff55,#27d9ff55);transform:translateX(-50%);z-index:-1}
+.profile-list{display:grid;gap:8px}.profile-item{display:flex;align-items:center;gap:10px;padding:11px;border-radius:13px;background:linear-gradient(90deg,#081b3c,#071534);border:1px solid #123e85}.pi{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:#10245e;font-size:20px;flex:none}.profile-item .pi-main{flex:1}.profile-item strong{display:block;font-size:12px}.profile-item span{display:block;color:var(--muted);font-size:9px;margin-top:2px}.toggle{width:63px;padding:7px;border-radius:20px;background:#2c3567;color:#b8c8e9;font-size:9px}.toggle.on{background:#0d775c;color:#d9fff1}.value{font-size:10px;font-weight:900;color:var(--cyan)}.controls-title{text-align:center;font-size:16px;color:#b9d2ff;font-weight:950;margin:14px 0 7px}
+.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(480px,100%);height:72px;padding:5px 5px calc(5px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);background:rgba(1,7,20,.96);backdrop-filter:blur(12px);border-top:1px solid #153e7d;z-index:20}.nav-item{background:transparent;color:#7f9bd0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:13px;font-size:9px}.nav-icon{font-size:22px;line-height:1}.nav-item.active{color:#26ddff;text-shadow:0 0 10px #168cff}.nav-item.active .nav-icon{filter:drop-shadow(0 0 7px #8b3cff)}
+.modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:#0009;z-index:50;padding:10px}.modal.show{display:flex}.sheet{width:min(480px,100%);max-height:85vh;overflow:auto;border:1px solid #285ad0;border-radius:22px 22px 0 0;background:linear-gradient(180deg,#071b3d,#020a1b);box-shadow:0 -20px 70px #001cff55;padding:16px}.sheet h3{text-align:center;font-size:18px}.sheet p{color:var(--muted);font-size:10px;text-align:center;margin:6px 0 12px}.input{width:100%;padding:11px;border-radius:11px;border:1px solid #2854a0;background:#030d21;color:#fff;outline:none}.modal-actions{display:flex;gap:8px;margin-top:10px}.modal-actions button{flex:1;padding:11px;border-radius:12px;background:linear-gradient(90deg,#5622ff,#982bff);font-weight:900;font-size:11px}.modal-actions .secondary{background:#172451}.history{display:grid;gap:7px}.history-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid #173d7d;border-radius:10px;background:#061632;font-size:9px}.history-row strong{color:#fff}.history-row span{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:86px;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:9px 14px;background:#0b3157;border:1px solid #25c1ff;border-radius:10px;font-size:10px;z-index:100;transition:.25s;box-shadow:0 0 20px #007dff55}.toast.show{transform:translate(-50%,0);opacity:1}.float{position:absolute;pointer-events:none;font-weight:1000;color:#25eaff;text-shadow:0 0 10px #00baff;animation:floatUp .8s ease-out forwards;z-index:5}@keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-75px) scale(1.25)}}
+@media(min-width:700px){body{padding:20px}.app{min-height:calc(100vh - 40px);border-radius:24px;border:1px solid #123e61}.bottom-nav{bottom:20px;border-radius:0 0 24px 24px}}
+
+.pending-claim{margin:6px auto 2px;padding:5px 11px;width:max-content;max-width:95%;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid #1c8fcb;color:#8ff5ff;font-size:10px;font-weight:900;box-shadow:inset 0 0 12px rgba(0,207,255,.08)}.claim-btn{transition:transform .15s,filter .15s,box-shadow .15s}.claim-btn.ready{animation:claimPulse 1.8s ease-in-out infinite}.claim-btn:active{transform:scale(.985)}.mine-box.tap-flash{animation:tapFlash .22s ease-out}.mine-circle.tap-spin{animation:coinTap .38s cubic-bezier(.2,.8,.2,1)}.mine-circle:before,.mine-circle:after{content:"";position:absolute;left:50%;top:50%;width:190px;height:190px;border:2px solid #19eaff;border-radius:50%;transform:translate(-50%,-50%) scale(.72);opacity:0;pointer-events:none}.mine-circle{position:relative}.mine-circle.tap-spin:before{animation:tapRing .48s ease-out}.mine-circle.tap-spin:after{animation:tapRing .62s .05s ease-out}.tap-sparks{position:absolute;left:50%;top:50%;width:10px;height:10px;pointer-events:none}.tap-sparks i{position:absolute;width:5px;height:18px;border-radius:4px;background:#21eaff;box-shadow:0 0 10px #21eaff;transform-origin:50% 80%;animation:sparkFly .45s ease-out forwards}.tap-sparks i:nth-child(1){transform:rotate(0deg)}.tap-sparks i:nth-child(2){transform:rotate(45deg)}.tap-sparks i:nth-child(3){transform:rotate(90deg)}.tap-sparks i:nth-child(4){transform:rotate(135deg)}.tap-sparks i:nth-child(5){transform:rotate(180deg)}.tap-sparks i:nth-child(6){transform:rotate(225deg)}.tap-sparks i:nth-child(7){transform:rotate(270deg)}.tap-sparks i:nth-child(8){transform:rotate(315deg)}@keyframes coinTap{0%{transform:scale(1) rotate(0)}30%{transform:scale(.88) rotate(-5deg)}65%{transform:scale(1.08) rotate(4deg)}100%{transform:scale(1) rotate(0)}}@keyframes tapRing{0%{transform:translate(-50%,-50%) scale(.7);opacity:.75}100%{transform:translate(-50%,-50%) scale(1.45);opacity:0}}@keyframes sparkFly{0%{transform:rotate(var(--r,0deg)) translateY(-55px) scale(.8);opacity:1}100%{transform:rotate(var(--r,0deg)) translateY(-105px) scale(0);opacity:0}}@keyframes tapFlash{0%{filter:brightness(1)}35%{filter:brightness(1.35)}100%{filter:brightness(1)}}@keyframes claimPulse{0%,100%{box-shadow:0 0 24px rgba(157,32,255,.5)}50%{box-shadow:0 0 34px rgba(157,32,255,.85)}}</style>
+</head>
+<body>
+<div class="app" id="app">
+<div id="toast" class="toast">Done</div>
+
+<section class="screen active" id="home">
+<header class="header">
+  <div class="brand"><div class="logo">ND</div><div><div class="brand-name">NayaDost Mining <span class="verified">✓</span></div><div class="subtitle">Tap · Mine · Grow Together</div></div></div>
+  <div class="header-actions"><button class="wallet-btn" id="walletBtn" onclick="connectWallet()">◈ Connect Wallet</button></div>
+</header>
+<div class="card">
+  <div class="profile"><div class="avatar">👤</div><div><div class="username" id="profileName">NayaDost Miner</div><div class="handle" id="profileHandle">@miner</div></div><div class="badge" id="rankBadge">♟ Beginner</div></div>
+  <div class="balance"><div class="coin">N</div><div><div class="label">Your Balance</div><div class="balance-number"><span id="balance">0.0000</span> <span class="unit">NYD</span></div><div class="green" id="rateText">+0.01/h</div></div><div class="wallet-icon">▣</div></div>
+  <div class="stats"><div class="stat"><strong id="taps">0</strong><span>Total Taps</span></div><div class="stat"><strong id="referrals">0</strong><span>Referrals</span></div><div class="stat"><strong class="green" id="todayEarned">+0.0000</strong><span>Today Earned</span></div></div>
 </div>
-<div class="nav"><button class="active"><span>⛏️</span>Mine</button><button><span>📋</span>Tasks</button><button><span>⚡</span>Miners</button><button><span>👥</span>Friends</button><button><span>👤</span>Profile</button></div>
-<script>let b=11.8845;function claim(){b+=0.5;document.getElementById('bal').innerHTML=b.toFixed(4)+' <span style="font-size:20px;color:#ffae00">NYD</span>'};if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand()}</script>
-</body></html>
+<div class="mine-box" id="mineBox">
+  <div class="mine-circle" id="mineCircle" onclick="mine()"><div class="pickaxe">⛏</div></div>
+  <div class="mine-title">Tap to Mine</div><div class="small" id="tapLimitText">100 taps/day</div><div class="mine-rate" id="tapRewardText">+0.0100 NYD per tap</div>
+  <div class="pending-claim" id="pendingClaim">Pending claim: 0.0000 NYD</div>
+  <button class="primary full" onclick="mine()">⛏ TAP TO MINE</button>
+</div>
+<button class="claim-btn" id="mainClaimBtn" onclick="claimMining()">CLAIM <span id="claimAmount">0.0000</span> NYD</button>
+<div class="invite" onclick="openScreen('friends')"><div class="gift">🎁</div><div><div class="invite-title">Invite Friends</div><div class="small">Get 100 NYD instantly per successful referral</div></div><div class="arrow">›</div></div>
+<div class="card" onclick="openDeposit()" style="cursor:pointer"><div class="friend-card"><div class="friend-icon">💎</div><div class="friend-main"><div class="friend-title">Deposit TON USDT</div><div class="friend-value">Deposit to increase mining speed · NYD price <b id="livePrice">$0.0010</b></div></div><div class="value">QR ›</div></div></div>
+<div class="section-title">Quick Rewards</div>
+<div class="task" onclick="openScreen('tasks')"><div class="task-icon">⚡</div><div class="task-body"><strong>Complete tasks</strong><span>Earn NYD rewards in the Tasks section</span></div><div>›</div></div>
+</section>
+
+<section class="screen" id="tasks">
+<header class="header"><div class="close-title"><button class="close" onclick="openScreen('home')">×</button><div><div class="page-title">Tasks</div></div></div><div class="spacer"></div></header>
+<div class="subtitle" style="text-align:center;margin:0 0 9px">Complete tasks and earn NYD rewards.</div>
+<div class="tabs" id="taskTabs"><button class="active" data-filter="all" onclick="selectTab(this)">All</button><button data-filter="social" onclick="selectTab(this)">Social</button><button data-filter="telegram" onclick="selectTab(this)">Telegram</button><button data-filter="other" onclick="selectTab(this)">Other</button></div>
+<div id="taskList"></div>
+</section>
+
+<section class="screen" id="miners">
+<header class="header"><div><div class="page-title" style="text-align:left">Miner Store</div><div class="subtitle">Auto-unlocks based on your NYD holding.</div></div><div class="spacer"></div></header>
+<div class="card"><div class="store-head"><div><div class="label">MY LEVEL JOURNEY</div><div class="card-title" id="journeyTitle" style="font-size:17px;font-weight:950;margin-top:4px">Level 1 · Peak 96</div></div><div class="peak" id="peakText">▽ 95 from peak</div></div><div class="green" style="font-size:10px;margin-top:6px">Today's P&L <b id="pnl">+0.0000 NYD</b></div><div class="chart"><svg viewBox="0 0 500 160" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d035ff" stop-opacity=".55"/><stop offset="1" stop-color="#d035ff" stop-opacity="0"/></linearGradient></defs><path d="M0 135 C45 65 70 80 100 35 S180 55 225 95 S310 125 360 75 S430 45 500 55 L500 160 L0 160Z" fill="url(#g)"/><path d="M0 135 C45 65 70 80 100 35 S180 55 225 95 S310 125 360 75 S430 45 500 55" fill="none" stroke="#d63cff" stroke-width="3"/></svg></div><div class="chart-note">☑ Tap to view full PNL chart →</div></div>
+<div class="levels" id="levels"></div>
+</section>
+
+<section class="screen" id="friends">
+<header class="header"><div class="close-title"><button class="close" onclick="openScreen('home')">×</button><div><div class="page-title">Friends</div><div class="subtitle" style="text-align:center">Invite friends to boost mining speed!</div></div></div><div class="spacer"></div></header>
+<div class="card friend-card"><div class="friend-icon">🔗</div><div class="friend-main"><div class="friend-title">Your Invite Link</div><div class="friend-value" id="inviteLink">Loading…</div></div><button class="copy" onclick="copyInvite()">Copy</button></div>
+<div class="card friend-card"><div class="friend-icon">👥</div><div class="friend-main"><div class="friend-title">Your Referrals</div><div class="friend-value" id="referralDetail">0 successful · 0 total</div></div></div>
+<div class="card friend-card"><div class="friend-icon">🎁</div><div class="friend-main"><div class="friend-title">Direct Referral Reward</div><div class="friend-value" id="referralReward">0 successful · +100 NYD paid instantly</div></div></div>
+<div class="card friend-card"><div class="friend-icon">⌛</div><div class="friend-main"><div class="friend-title">Network Rewards</div><div class="friend-value" id="teamWallet">0.0000 NYD · Multi-level claim commissions</div></div><button class="done" id="teamClaimBtn" onclick="claimReferralRewards()">Claim</button></div>
+<div class="subtitle" style="text-align:center;margin-top:12px">Network commissions: L1 5% · L2 3% · L3 2% · L4 1% · L5+ 0.5% of eligible Claims</div><div class="subtitle" style="text-align:center;margin-top:12px">Latest invited friends</div><div class="subtitle" style="text-align:center;margin-top:8px" id="latestFriends">No invited friends yet.</div>
+<div class="tree"><div class="root">👤</div><div class="row r1"><div class="node">👤</div><div class="node">👤</div><div class="node">👤</div></div><div class="row r2"><div class="node">👤</div><div class="node">👤</div><div class="node">👤</div><div class="node">👤</div></div><div class="row r3"><div class="node">👤</div><div class="node">👤</div><div class="node">👤</div><div class="node">👤</div><div class="node">👤</div></div></div>
+</section>
+
+<section class="screen" id="profile">
+<header class="header"><div class="close-title"><button class="close" onclick="openScreen('home')">×</button><div class="page-title">Profile</div></div><div class="spacer"></div></header>
+<div class="profile-list">
+<div class="profile-item"><div class="pi">👤</div><div class="pi-main"><strong>User ID</strong><span id="userId">Local Miner</span></div></div>
+<div class="profile-item"><div class="pi">✅</div><div class="pi-main"><strong>Account Verification</strong><span id="verifyStatus">Unverified</span></div><button class="go" onclick="verifyAccount()">Verify</button></div>
+<div class="profile-item" onclick="toggleSound()"><div class="pi">🔇</div><div class="pi-main"><strong>Sound effects</strong><span id="soundText">Muted — tap to enable</span></div><button class="toggle" id="soundToggle">Off</button></div>
+<div class="profile-item"><div class="pi">💰</div><div class="pi-main"><strong>Assets</strong><span id="assetUsd">0.0000 NYD</span></div><div class="value" id="assetValue">≈ $0.0000</div></div>
+<div class="profile-item"><div class="pi">💳</div><div class="pi-main"><strong>Holding Wallet</strong><span id="holdingWallet">0 NYD</span></div></div>
+<div class="profile-item"><div class="pi">🏦</div><div class="pi-main"><strong>Pool Wallet</strong><span>Withdrawable balance</span></div><div class="value" id="poolWallet">0.0000 NYD</div></div>
+</div>
+<div class="controls-title">Controls</div>
+<div class="profile-item"><div class="pi">↗</div><div class="pi-main"><strong>Withdraw</strong><span>Transfer Pool to Wallet</span></div><button class="copy" onclick="openWithdraw()">Withdraw</button></div>
+<div class="profile-item"><div class="pi">📄</div><div class="pi-main"><strong>History</strong><span>Your withdrawals</span></div><button class="copy" onclick="openHistory()">Open</button></div>
+<div class="profile-item"><div class="pi">🔌</div><div class="pi-main"><strong>Wallet</strong><span id="walletAddressShort">Not connected</span></div><button class="go" onclick="connectWallet()" id="profileWalletBtn">Connect</button></div>
+</section>
+
+<nav class="bottom-nav">
+<button class="nav-item active" data-screen="home" onclick="openScreen('home')"><span class="nav-icon">⛏</span>Mine</button>
+<button class="nav-item" data-screen="tasks" onclick="openScreen('tasks')"><span class="nav-icon">▤</span>Tasks</button>
+<button class="nav-item" data-screen="miners" onclick="openScreen('miners')"><span class="nav-icon">⚡</span>Miners</button>
+<button class="nav-item" data-screen="friends" onclick="openScreen('friends')"><span class="nav-icon">♣</span>Friends</button>
+<button class="nav-item" data-screen="profile" onclick="openScreen('profile')"><span class="nav-icon">●</span>Profile</button>
+</nav>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="sheet" id="sheet"></div></div>
+
+<script>
+'use strict';
+const APP_KEY='nayaDostMining.v4';
+// Permanent production API: NayaDost Cloudflare deployment.
+// Keep the Mini App and API on the same Cloudflare origin.
+const API='https://nayadost-app.nayadost-db.workers.dev/api';
+const DEPOSIT_ADDRESS='UQCx6kQYSADRJEjejFFttCNo12pjdquaOMhrXn8zYuF1wTvX';
+let PAYMENT_CONFIG={tonAddress:DEPOSIT_ADDRESS,usdtAddress:DEPOSIT_ADDRESS,usdtMaster:'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs'};
+const EARN_CHANNEL='https://t.me/+9-jDg9aDMOphNzdl';
+const OFFICIAL_CHANNEL='https://t.me/NYDEarn_Official';
+const BOT_FALLBACK='NayaDostMining_NYD_bot';
+const TASKS=[
+ {id:'youtube',cat:'social',icon:'▶',name:'YouTube Like & Comment (Videos + Shorts)',reward:1,url:'https://www.youtube.com/'},
+ {id:'earn_channel',cat:'telegram',icon:'✈',name:'NYD EARN PAYMENT CHANNEL — Join & Verify',reward:1,telegram:true,url:EARN_CHANNEL},
+ {id:'official_channel',cat:'telegram',icon:'✈',name:'OFFICIAL CHANNEL — Join & Verify',reward:1,telegram:true,url:OFFICIAL_CHANNEL},
+ {id:'x',cat:'social',icon:'𝕏',name:'X (Twitter) Retweet',reward:1,url:'https://x.com/'},
+ {id:'site',cat:'other',icon:'🌐',name:'Visit Website (nydtoken.com)',reward:1,url:'https://nydtoken.com/'},
+ {id:'react',cat:'social',icon:'🔥',name:'React to latest post (English)',reward:1,url:OFFICIAL_CHANNEL},
+ {id:'daily',cat:'other',icon:'◷',name:'Daily Check-in',reward:5,daily:true},
+ {id:'profile',cat:'other',icon:'●',name:'Complete Profile',reward:10,profile:true},
+ {id:'invite',cat:'other',icon:'♟',name:'Invite 1 Friend',reward:50,ref:true}
+];
+const LEVELS=Array.from({length:96},(_,i)=>{const level=i+1;const reward=level===1?0:(0.0703+(level-2)*0.0015);const cost=level===2?100:Math.ceil(100*Math.pow(1.45,level-2));return {level,reward,cost,speed:.20+Math.min(.02,(level-1)*.0002)}});
+const DEFAULT={telegramId:'',wallet:'',walletType:'TON',verified:false,balance:0,taps:0,todayEarned:0,referrals:0,successfulReferrals:0,referralReward:0,teamWallet:0,pendingMining:0,withdrawals:[],claimedTasks:{},dailyClaimKey:'',level:1,sound:false,inviteCode:null,profileName:'NayaDost Miner',handle:'@miner'};
+let state=JSON.parse(localStorage.getItem(APP_KEY)||'null')||structuredClone(DEFAULT);let currentFilter='all';let audioCtx=null;
+function dayKey(){return new Date().toISOString().slice(0,10)}
+function fmt(n,d=4){return Number(n||0).toFixed(d)}
+function shortAddr(a){return a?a.slice(0,7)+'…'+a.slice(-5):'Not connected'}
+function tgUser(){const u=window.Telegram?.WebApp?.initDataUnsafe?.user;return u||null}
+function uid(){const u=tgUser();return String(u?.id||state.telegramId||'web-'+(localStorage.getItem(APP_KEY+':uid')||crypto.randomUUID()))}
+function save(){localStorage.setItem(APP_KEY,JSON.stringify(state));render()}
+window.getNayaDostApi=()=>API;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),1900);if(state.sound)beep(620,.05)}
+function beep(freq=520,dur=.06){if(!state.sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.035,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}catch(e){}}
+async function api(path,options={}){const u=tgUser();const method=(options.method||'GET').toUpperCase();const body=Object.assign({telegram_id:uid(),username:u?.username||'',first_name:u?.first_name||state.profileName,last_name:u?.last_name||'',referrer_code:window.Telegram?.WebApp?.initDataUnsafe?.start_param||''},options.body||{});const cfg={...options,method,headers:{'Content-Type':'application/json','X-Telegram-Init-Data':window.Telegram?.WebApp?.initData||'',...(options.headers||{})}};if(method!=='GET')cfg.body=JSON.stringify(body);else cfg.headers['X-Telegram-User']=JSON.stringify(body);let r;try{r=await fetch(API+path,cfg)}catch(e){throw new Error('NayaDost Cloudflare backend is not reachable. Please open the official NayaDost app URL and try again.')}const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error(`Backend returned invalid JSON (${r.status}). API: ${API}`)}if(!j)throw new Error(`Backend returned an empty response (${r.status}). API: ${API}`);if(!r.ok||j.ok===false)throw new Error(j.error||`Request failed (${r.status})`);return j}
+async function syncPendingLevelPayments(){try{const j=await api('/level-payments',{method:'POST',body:{}});for(const p of (j.rows||[]).filter(x=>x.status==='Pending').slice(0,3)){try{const c=await api('/level-payment/confirm',{method:'POST',body:{invoice:p.invoice}});if(c.confirmed){state={...state,...c.user,telegramId:c.user.id};save();showToast('Level '+c.level+' payment confirmed ✓');}}catch(e){}}renderMiners()}catch(e){}}
+async function bootstrap(){try{const u=tgUser();if(u){state.telegramId=String(u.id);state.profileName=[u.first_name,u.last_name].filter(Boolean).join(' ')||state.profileName;state.handle=u.username?'@'+u.username:state.handle}const j=await api('/bootstrap');state={...state,...j.user,telegramId:j.user.id,pendingMining:Number(j.user.pendingMining||0),dailyClaimKey:j.dailyClaimed?dayKey():state.dailyClaimKey,inviteCode:j.user.referralCode||state.inviteCode};PAYMENT_CONFIG={...PAYMENT_CONFIG,...(j.payments||{})};state.claimedTasks={...(state.claimedTasks||{})};(j.claims||[]).forEach(x=>state.claimedTasks[x]=true);save();renderTasks();renderMiners();}catch(e){render();renderTasks();renderMiners();showToast('Offline mode: '+e.message)}}
+async function mine(){if((state.mineDay||dayKey())!==dayKey()){state.mineDay=dayKey();state.mineTaps=0}if((state.mineTaps||0)>=100){showToast('Daily 100 taps reached');return}try{const j=await api('/mine');state.balance=j.balance;state.pendingMining=Number(j.pendingMining||0);state.taps=j.taps;state.mineDay=dayKey();state.mineTaps=(state.mineTaps||0)+1;state.todayEarned=(state.todayEarned||0)+j.reward;save();animateMine(j.reward)}catch(e){showToast(e.message)}}
+function animateMine(reward){
+ const box=document.getElementById('mineBox'),c=document.getElementById('mineCircle');
+ box.classList.remove('tap-flash');c.classList.remove('tap-spin');void box.offsetWidth;void c.offsetWidth;
+ box.classList.add('tap-flash');c.classList.add('tap-spin');
+ const sparks=document.createElement('div');sparks.className='tap-sparks';
+ for(let i=0;i<8;i++){const s=document.createElement('i');s.style.setProperty('--r',(i*45)+'deg');sparks.appendChild(s)}
+ c.appendChild(sparks);setTimeout(()=>sparks.remove(),650);
+ const f=document.createElement('div');f.className='float';f.textContent='+'+fmt(reward,4)+' NYD';f.style.left=(35+Math.random()*30)+'%';f.style.top='30%';
+ box.appendChild(f);setTimeout(()=>f.remove(),800);beep(760,.08)
+}
+async function claimMining(){
+ const amount=Number(state.pendingMining||0);
+ if(amount<=0){showToast('No mined NYD available to claim');return}
+ try{
+  const j=await api('/claim',{method:'POST',body:{}});
+  state={...state,...j.user,telegramId:j.user.id};save();renderTasks();showToast('Claimed +'+fmt(j.claimed,4)+' NYD');
+ }catch(e){showToast(e.message)}
+}
+
+
+async function rewardTask(id){const t=TASKS.find(x=>x.id===id);if(!t)return;
+ const dailyClaimed=t.daily&&state.dailyClaimKey===dayKey();
+ if((state.claimedTasks[id]&&!t.daily)||dailyClaimed){showToast('Already claimed');return}
+ if(t.daily){try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.dailyClaimKey=j.dailyKey||dayKey();save();renderTasks();showToast('Daily +'+fmt(j.reward,2)+' NYD added')}catch(e){showToast(e.message)}return}
+ if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){window.open(t.url,'_blank','noopener,noreferrer');setTimeout(async()=>{try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('Telegram joined & verified +'+t.reward+' NYD')}catch(e){showToast(e.message)}},1200);return}if(t.url)window.open(t.url,'_blank','noopener,noreferrer');try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
+function renderTasks(){const list=document.getElementById('taskList');if(!list)return;const arr=TASKS.filter(t=>currentFilter==='all'||t.cat===currentFilter);list.innerHTML=arr.map(t=>{const claimed=t.daily?state.dailyClaimKey===dayKey():!!state.claimedTasks[t.id];const blocked=t.profile&&!state.verified;const refBlocked=t.ref&&state.successfulReferrals<1;const label=claimed?'Claimed':blocked?'Verify':refBlocked?'Invite':t.telegram?'Join & Verify':'Go';return `<div class="task ${claimed?'claimed':''}"><div class="task-icon">${t.icon}</div><div class="task-body"><strong>${t.name}</strong><span>${claimed?'Claimed':blocked?'Wallet verification required':refBlocked?'Requires 1 successful referral':'+'+fmt(t.reward,t.reward%1?1:0)+' NYD'}</span></div><button class="${claimed?'done':'go'}" onclick="rewardTask('${t.id}')" ${claimed?'disabled':''}>${label}</button></div>`}).join('')}
+function selectTab(btn){document.querySelectorAll('#taskTabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;renderTasks()}
+function renderMiners(){const l=document.getElementById('levels');if(!l)return;const current=state.level||1;document.getElementById('journeyTitle').textContent=`Level ${current} · Peak 96`;document.getElementById('peakText').textContent=`▽ ${Math.max(0,96-current)} from peak`;l.innerHTML=LEVELS.map(x=>{const active=x.level===current,unlocked=x.level<=current,next=x.level===current+1;return `<div class="level ${active?'active':''} ${unlocked?'':'locked'}"><div class="level-top">Lvl ${x.level}</div><div class="level-value">${x.reward.toFixed(4)}$</div><div class="level-speed">Speed <b>${x.speed.toFixed(2)} TH/s</b></div><button onclick="upgrade(${x.level})" ${(!next)?'disabled':''}>${active?'ACTIVE':next?'⚡ PAY & UNLOCK':'🔒 LOCKED'}</button>${next?`<div class="cost">Payment required · unlocks Level ${x.level} mining speed</div>`:''}</div>`}).join('')}
+async function upgrade(level){
+ const x=LEVELS[level-1];
+ if(level!==(state.level||1)+1){showToast(level<=state.level?'Already unlocked':'Unlock levels in order');return}
+ if(!state.wallet||!state.verified){showToast('Connect and verify your TON wallet first');openScreen('profile');return}
+ try{
+  const asset=await choosePaymentAsset(x);
+  if(!asset)return;
+  const inv=await api('/level-payment/create',{method:'POST',body:{level,asset}});
+  const uri=asset==='TON'
+    ? `ton://transfer/${encodeURIComponent(inv.recipient)}?amount=${encodeURIComponent(inv.amountUnits)}&text=${encodeURIComponent(inv.invoice)}`
+    : `ton://transfer/${encodeURIComponent(inv.recipient)}?jetton=${encodeURIComponent(inv.usdtMaster)}&amount=${encodeURIComponent(inv.amountUnits)}&text=${encodeURIComponent(inv.invoice)}`;
+  showPaymentModal(inv,uri);
+ }catch(e){showToast(e.message)}
+}
+function choosePaymentAsset(x){return new Promise(resolve=>{document.getElementById('sheet').innerHTML=`<h3>Unlock Miner Level ${x.level}</h3><p>Level ${x.level} unlocks the next mining speed. Your connected Telegram TON wallet will be used as the sender.</p><div class="card"><b>Price</b><br>Calculated from ${fmt(x.cost,0)} NYD unlock value × current NYD price.</div><div class="modal-actions"><button onclick="closeModal();resolve('USDT')">Pay with USDT</button><button class="secondary" onclick="closeModal();resolve('TON')">Pay with TON</button><button class="secondary" onclick="closeModal();resolve(null)">Cancel</button></div>`;document.getElementById('modal').classList.add('show')})}
+function showPaymentModal(inv,uri){window.currentLevelInvoice=inv.invoice;window.currentLevelUri=uri;document.getElementById('sheet').innerHTML=`<h3>Payment Required — Level ${inv.level}</h3><p><b>${fmt(inv.amount,6)} ${inv.asset}</b> → payment wallet</p><div class="card" style="word-break:break-all;font-size:10px">${inv.recipient}</div><p class="subtitle">Invoice: ${inv.invoice}</p><div class="modal-actions"><button onclick="openPaymentLink()">💳 Pay from Wallet</button><button class="secondary" onclick="checkLevelPayment()">🔎 Check Payment</button><button class="secondary" onclick="closeModal()">Close</button></div><div id="paymentStatus" class="subtitle" style="text-align:center;margin-top:10px">Waiting for blockchain confirmation…</div>`;document.getElementById('modal').classList.add('show')}
+function openPaymentLink(){try{const tg=window.Telegram?.WebApp;if(tg?.openLink&&/^https?:/i.test(window.currentLevelUri))tg.openLink(window.currentLevelUri);else window.location.href=window.currentLevelUri}catch(e){window.location.href=window.currentLevelUri}setTimeout(checkLevelPayment,5000)}
+async function checkLevelPayment(){if(!window.currentLevelInvoice)return;const el=document.getElementById('paymentStatus');if(el)el.textContent='Checking TON blockchain…';try{const j=await api('/level-payment/confirm',{method:'POST',body:{invoice:window.currentLevelInvoice}});if(j.confirmed){state={...state,...j.user,telegramId:j.user.id};save();if(el)el.textContent='Payment confirmed ✓';showToast('Level '+j.level+' unlocked — mining speed increased');setTimeout(closeModal,700);renderMiners();return}if(el)el.textContent='Payment not confirmed yet. Tap Check Payment again after wallet payment.'}catch(e){if(el)el.textContent=e.message;showToast(e.message)}}
+function getInviteCode(){return state.inviteCode||state.telegramId||uid()}
+function getInviteLink(){return `https://t.me/${BOT_FALLBACK}?start=${encodeURIComponent(getInviteCode())}`}
+function copyInvite(){navigator.clipboard?.writeText(getInviteLink()).then(()=>showToast('Referral link copied')).catch(()=>showToast(getInviteLink()))}
+function renderFriends(){document.getElementById('inviteLink').textContent=getInviteLink();document.getElementById('referralDetail').textContent=`${state.successfulReferrals||0} successful · ${state.referrals||0} total`;document.getElementById('referralReward').textContent=`${state.successfulReferrals||0} successful · +100 NYD paid instantly`;document.getElementById('teamWallet').textContent=`${fmt(state.teamWallet||0,4)} NYD · Multi-level network rewards`;const b=document.getElementById('teamClaimBtn');if(b)b.disabled=!(state.teamWallet>0)}
+async function claimReferralRewards(){if(!state.referralReward){showToast('No referral rewards available');return}try{const j=await api('/referrals/claim',{method:'POST'});state={...state,...j.user,telegramId:j.user.id};save();renderFriends();showToast('Network rewards claimed +'+fmt(j.reward,4)+' NYD')}catch(e){showToast(e.message)}}
+async function prepareTonProof(){
+ if(!window.tonConnectUI) throw new Error('TON Connect is not loaded');
+ const j=await api('/ton-proof/nonce',{method:'POST',body:{}});
+ window.tonProofPayload=j.payload;
+ window.tonConnectUI.setConnectRequestParameters({state:'ready',value:{tonProof:j.payload}});
+}
+async function verifyAccount(){
+ if(!state.wallet){showToast('Connect your TON wallet first');return}
+ if(state.verified){showToast('Wallet already verified');return}
+ showToast('Wallet ownership is verified during TON Connect');
+}
+async function connectWallet(){
+ try{
+   if(!window.tonConnectUI){throw new Error(window.tonConnectLoadError?.message||'TON Connect is not loaded. Open the Mini App from Telegram.')}
+   if(!tgUser()){throw new Error('Open NayaDost inside Telegram to connect your wallet')}
+   showToast('Opening Telegram/TON wallet…');
+   await prepareTonProof();
+   window.tonConnectUI.openModal();
+ }catch(e){showToast(e.message)}
+}
+function openWithdraw(){if(!state.wallet){showToast('Connect wallet first');return}document.getElementById('sheet').innerHTML=`<h3>Withdraw NYD</h3><p>Balance ${fmt(state.balance,4)} NYD · Max 500 NYD/request · 3% burn</p><input id="withdrawAmount" class="input" type="number" min="10" max="500" step="0.0001" placeholder="10–500 NYD"><div class="modal-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button onclick="submitWithdraw()">Submit</button></div>`;document.getElementById('modal').classList.add('show')}
+async function submitWithdraw(){const amount=Number(document.getElementById('withdrawAmount').value);if(amount<10||amount>500){showToast('Withdrawal must be between 10 and 500 NYD');return}try{const j=await api('/withdraw',{method:'POST',body:{amount}});state.balance=j.balance;state.withdrawals=state.withdrawals||[];state.withdrawals.unshift({id:j.id,amount:j.amount,burn:j.burn,net:j.net,status:j.status,wallet:state.wallet,date:new Date().toISOString()});save();closeModal();showToast(`Pending: ${fmt(j.net,4)} NYD after 3% burn`)}catch(e){showToast(e.message)}}
+async function openHistory(){try{const j=await api('/history',{method:'POST',body:{}});const rows=j.rows.length?j.rows.map(w=>`<div class="history-row"><div><strong>${fmt(w.amount,4)} NYD</strong><br><span>Burn ${fmt(w.burn,4)} · Net ${fmt(w.net,4)}</span></div><div>${w.status}<br><span>${shortAddr(w.address)}</span></div></div>`).join(''):'<div class="subtitle" style="text-align:center;padding:20px">No withdrawals yet.</div>';document.getElementById('sheet').innerHTML=`<h3>Withdrawal History</h3><div class="history">${rows}</div><div class="modal-actions"><button onclick="closeModal()">Close</button></div>`;document.getElementById('modal').classList.add('show')}catch(e){showToast(e.message)}}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function toggleSound(){state.sound=!state.sound;save();showToast(state.sound?'Sound effects enabled':'Sound effects muted')}
+function openDeposit(){const ton=PAYMENT_CONFIG.tonAddress||DEPOSIT_ADDRESS;const usdt=PAYMENT_CONFIG.usdtAddress||'';const q=usdt?'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(usdt):'';document.getElementById('sheet').innerHTML=`<h3>TON / USDT Payment Wallet</h3><p>Use the exact receiving address shown below. USDT is on TON Network.</p><div class="card"><b>TON receiving wallet</b><div style="word-break:break-all;font-size:10px;margin-top:6px">${ton}</div><button onclick="navigator.clipboard.writeText('${ton}');showToast('TON address copied')">Copy TON address</button></div><div class="card"><b>USDT receiving address</b>${usdt?`<div style="text-align:center;margin:10px 0"><img src="${q}" alt="USDT TON QR" style="width:190px;height:190px;border-radius:14px;background:#fff;padding:8px;max-width:100%"></div><div style="word-break:break-all;font-size:10px">${usdt}</div><button onclick="navigator.clipboard.writeText('${usdt}');showToast('USDT address copied')">Copy USDT address</button>`:'<div class="subtitle" style="margin-top:10px">USDT receiving address is not configured yet.</div>'}</div><div class="modal-actions"><button onclick="closeModal()">Close</button></div>`;document.getElementById('modal').classList.add('show')}
+async function updatePrice(){try{const r=await fetch(API+'/price',{headers:{'Accept':'application/json'}});const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error('Invalid price response')}if(!r.ok||!j)throw new Error('Empty price response');document.getElementById('livePrice').textContent='$'+Number(j.price).toFixed(4)}catch(e){document.getElementById('livePrice').textContent='$0.0010'}}
+function openScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));if(id==='tasks')renderTasks();if(id==='miners')renderMiners();if(id==='friends')renderFriends();if(id==='profile')renderProfile();window.scrollTo(0,0)}
+function renderProfile(){document.getElementById('userId').textContent=state.telegramId||'Web Miner';document.getElementById('verifyStatus').textContent=state.verified?'Verified · '+shortAddr(state.wallet):'Unverified';document.getElementById('soundText').textContent=state.sound?'Enabled — tap to mute':'Muted — tap to enable';const st=document.getElementById('soundToggle');st.textContent=state.sound?'On':'Off';st.classList.toggle('on',state.sound);document.getElementById('assetUsd').textContent=fmt(state.balance,4)+' NYD';document.getElementById('assetValue').textContent='≈ $'+fmt(state.balance*0.001,6);document.getElementById('holdingWallet').textContent=state.wallet?shortAddr(state.wallet):'0 NYD';document.getElementById('poolWallet').textContent=fmt(state.balance,4)+' NYD';document.getElementById('walletAddressShort').textContent=state.wallet?shortAddr(state.wallet):'Not connected';document.getElementById('profileWalletBtn').textContent=state.wallet?'Reconnect':'Connect'}
+function render(){state.pendingMining=Number(state.pendingMining||0);document.getElementById('balance').textContent=fmt(state.balance,4);document.getElementById('taps').textContent=(state.taps||0).toLocaleString();document.getElementById('referrals').textContent=state.referrals||0;document.getElementById('todayEarned').textContent='+'+fmt(state.todayEarned,4);const rate=.01*(1+Math.max(0,(state.level||1)-1)*.02);document.getElementById('rateText').textContent='+'+fmt(rate,4)+'/tap';document.getElementById('tapRewardText').textContent='+'+fmt(rate,4)+' NYD per tap';document.getElementById('tapLimitText').textContent=`${100-(state.mineDay===dayKey()?(state.mineTaps||0):0)} taps left today`;const pc=document.getElementById('pendingClaim'),ca=document.getElementById('claimAmount'),cb=document.getElementById('mainClaimBtn');if(pc)pc.textContent='Pending claim: '+fmt(state.pendingMining,4)+' NYD';if(ca)ca.textContent=fmt(state.pendingMining,4);if(cb)cb.classList.toggle('ready',state.pendingMining>0);document.getElementById('rankBadge').textContent='♟ '+((state.level||1)<5?'Beginner':(state.level||1)<20?'Miner':'Pro Miner');document.getElementById('profileName').textContent=state.profileName||'NayaDost Miner';document.getElementById('profileHandle').textContent=state.handle||'@miner';document.getElementById('walletBtn').textContent=state.wallet?'◈ '+shortAddr(state.wallet):'◈ Connect Wallet';renderProfile();renderFriends()}
+function initTelegram(){try{const tg=window.Telegram?.WebApp;if(!tg)return;tg.ready();tg.expand()}catch(e){}}
+window.addEventListener('load',async()=>{initTelegram();render();renderTasks();renderMiners();await bootstrap();await syncPendingLevelPayments();updatePrice();setInterval(updatePrice,30000);setInterval(syncPendingLevelPayments,15000);});
+</script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/@tonconnect/ui@3.0.2/dist/tonconnect-ui.min.js"></script>
+<script>
+(function(){
+  try{
+    const isTelegram=!!window.Telegram?.WebApp?.initData;
+    if(!isTelegram) return;
+    if(!window.TON_CONNECT_UI?.TonConnectUI) throw new Error('TON Connect library failed to load');
+    const manifestUrl=new URL('/tonconnect-manifest.json',window.location.origin).toString();
+    if(location.protocol!=='https:' && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
+      throw new Error('TON Connect requires the Mini App to be served over HTTPS');
+    }
+    window.tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl,
+      buttonRootId:null,
+      uiPreferences:{theme:TON_CONNECT_UI.THEME?.DARK||'DARK'},
+    });
+    window.tonConnectUI.onStatusChange(async function(wallet){
+      if(!wallet){
+        state.wallet=''; state.walletType=''; state.verified=false; save(); return;
+      }
+      const proofItem=wallet.connectItems?.tonProof;
+      if(!proofItem || !('proof' in proofItem)){
+        // TON Connect does not return ton_proof again when restoring an existing session.
+        // Keep an already server-verified wallet connected; only a fresh connection must prove ownership.
+        if(state.verified && state.wallet===wallet.account?.address){ render(); return; }
+        showToast('Wallet proof was not returned. Tap Connect Wallet and approve the proof.');
+        try{await window.tonConnectUI.disconnect()}catch(e){}
+        return;
+      }
+      try{
+        const account=wallet.account;
+        const j=await api('/ton-proof/verify',{method:'POST',body:{
+          address:account.address,
+          chain:account.chain,
+          public_key:account.publicKey,
+          walletStateInit:account.walletStateInit,
+          proof:proofItem.proof
+        }});
+        state={...state,...j.user,telegramId:j.user.id};
+        save();
+        showToast('TON wallet connected & ownership verified ✓');
+      }catch(e){
+        showToast(e.message||'Wallet verification failed');
+        try{await window.tonConnectUI.disconnect()}catch(x){}
+      }
+    });
+    window.tonConnectUI.connectionRestored.then(function(restored){
+      if(restored && window.tonConnectUI.wallet){
+        const w=window.tonConnectUI.wallet;
+        if(w.account?.address && state.wallet!==w.account.address){
+          // Session restore is handled by TON Connect; server identity remains Telegram-bound.
+          state.wallet=w.account.address; state.walletType='TON'; save();
+        }
+      }
+    });
+  }catch(e){window.tonConnectLoadError=e;console.error('TON Connect init failed',e)}
+})();
+</script>
+</body>
+</html>

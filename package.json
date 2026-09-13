@@ -1,0 +1,20 @@
+{
+  "name": "nayadost-mining",
+  "version": "2.0.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "sqlite3": "^5.1.7",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^15.1.0",
+    "tweetnacl": "^1.0.3"
+  }
+}
