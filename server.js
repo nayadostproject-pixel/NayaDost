@@ -42,8 +42,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 const PORT = Number(process.env.PORT || 3000);
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'CHANGE_ME_NOW';
-const ADMIN_PATH = process.env.ADMIN_PATH || '/nyd-private-control-7x9k';
-const BOT_API_KEY = process.env.BOT_API_KEY || ADMIN_KEY;
 const OFFICIAL_CHANNEL = process.env.OFFICIAL_CHANNEL || '@NYDEarn_Official';
 const EARN_CHANNEL = process.env.EARN_CHANNEL || 'https://t.me/+9-jDg9aDMOphNzdl';
 const DEPOSIT_ADDRESS = process.env.DEPOSIT_ADDRESS || 'UQCx6kQYSADRJEjejFFttCNo12pjdquaOMhrXn8zYuF1wTvX';
@@ -93,11 +91,12 @@ db.serialize(()=>{
  db.run(`CREATE TABLE IF NOT EXISTS level_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, invoice TEXT UNIQUE NOT NULL, user_id INTEGER NOT NULL, level INTEGER NOT NULL, asset TEXT NOT NULL, amount REAL NOT NULL, amount_units TEXT NOT NULL, recipient TEXT NOT NULL, sender TEXT, status TEXT DEFAULT 'Pending', tx_hash TEXT, admin_note TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`INSERT OR IGNORE INTO tasks(id,title,reward,type,channel) VALUES
   ('youtube','YouTube Like & Comment (Videos + Shorts)',1,'external',''),
-  ('earn_channel','NYD EARN PAYMENT CHANNEL — Join & Verify',1,'telegram',?),
-  ('official_channel','Official Channel — Join & Verify',1,'telegram',?),
+  ('earn_channel','NYD EARN PAYMENT CHANNEL — Join & Verify',200,'telegram',?),
+  ('official_channel','Official Channel — Join & Verify',200,'telegram',?),
   ('website','Visit Website (nydtoken.com)',1,'external',''),
   ('react','React to latest post (English)',1,'external',''),
   ('daily','Daily Check-in',5,'daily','')`,[EARN_CHANNEL,OFFICIAL_CHANNEL]);
+ db.run("UPDATE tasks SET reward=200 WHERE id IN ('earn_channel','official_channel')");
 });
 
 db.run('ALTER TABLE users ADD COLUMN referral_reward INTEGER DEFAULT 0',()=>{});
@@ -242,13 +241,13 @@ app.post('/api/mine',async(req,res)=>{try{
  let used=0;
  const meta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[key]);
  if(meta)used=Number(meta.amount)||0;
- if(used>=100)return res.status(400).json({ok:false,error:'Daily 100 tap limit reached'});
+ if(used>=5000)return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached'});
  const reward=0.01*(1+Math.max(0,Number(u.miner_level||1)-1)*0.02);
  await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
  if(meta) await run('UPDATE deposits SET amount=amount+? WHERE tx_hash=?',[1,key]);
  else await run('INSERT INTO deposits(user_id,tx_hash,amount,asset,network,status) VALUES(?,?,?,?,?,?)',[u.id,key,1,'TAPS','LOCAL','Counter']);
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
- res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,remaining:99-used});
+ res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,remaining:4999-used});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/claim',async(req,res)=>{try{
@@ -435,13 +434,9 @@ app.post('/api/deposit/status',async(req,res)=>{try{const u=await getUser(req.bo
 app.get('/api/price',async(req,res)=>{let price=PRICE_FALLBACK,source='fallback';try{if(PRICE_API_URL){const r=await fetch(PRICE_API_URL);const j=await r.json(); const p=Number(j.price ?? j.usd ?? j.data?.price);if(Number.isFinite(p)&&p>0){price=p;source='configured-api'}}}catch{} await run('INSERT INTO price_history(price,source) VALUES(?,?)',[price,source]);res.json({ok:true,price,source,updatedAt:new Date().toISOString()})});
 
 function admin(req,res,next){if(req.headers['x-admin-key']!==ADMIN_KEY)return res.status(401).json({ok:false,error:'Unauthorized'});next()}
-app.get(ADMIN_PATH,admin,async(req,res)=>{const users=await all('SELECT id,telegram_id,username,referral_code,referrer_code,wallet_address,balance,verified,referrals,miner_level,created_at FROM users ORDER BY id DESC');const wd=await all('SELECT w.*,u.telegram_id,u.username FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC');res.json({ok:true,depositAddress:DEPOSIT_ADDRESS,users,withdrawals:wd})});
-app.post(ADMIN_PATH+'/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
-app.get(ADMIN_PATH+'/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
-app.get(ADMIN_PATH+'/panel',(req,res)=>res.sendFile(path.join(webDir,'admin.html')));
-
-function botApi(req,res,next){if(req.headers['x-bot-api-key']!==BOT_API_KEY)return res.status(401).json({ok:false,error:'Unauthorized'});next()}
-app.post('/bot/user',botApi,async(req,res)=>{try{const u=await getUser(req.body);res.json({ok:true,user:publicUser(u)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
+app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegram_id,username,referral_code,referrer_code,wallet_address,balance,verified,referrals,miner_level,created_at FROM users ORDER BY id DESC');const wd=await all('SELECT w.*,u.telegram_id,u.username FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC');res.json({ok:true,depositAddress:DEPOSIT_ADDRESS,users,withdrawals:wd})});
+app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
+app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
 const webDir = fs.existsSync(path.join(__dirname,'public')) ? path.join(__dirname,'public') : __dirname;
 app.use((req,res,next)=>{if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
