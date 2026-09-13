@@ -77,3 +77,11 @@ The defaults are usable for testing, but production should set the real receivin
 - The frontend always refreshes balance and today's mining count from the server on bootstrap; localStorage is only a UI cache.
 - Today's mining limit is exactly 5000 taps, server-enforced.
 - The two Telegram channel tasks are forced to `200 NYD` on startup, including existing databases.
+
+
+## Task reward and verification
+- The two Telegram channel tasks are stored server-side at 200 NYD each.
+- Existing databases are migrated to 200 NYD at startup.
+- Telegram rewards are only credited after the backend verifies membership with Bot API getChatMember.
+- Configure EARN_CHANNEL_CHAT_ID and OFFICIAL_CHANNEL_CHAT_ID in production.
+- Withdrawal history is stored in SQLite and read from the server.

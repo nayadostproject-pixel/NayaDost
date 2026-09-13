@@ -7,3 +7,7 @@ NayaDost final persistence fix
 5. Do not switch the Render service back to Free if you want SQLite data to persist.
 6. Two Telegram tasks are hard-set to 200 NYD.
 7. Daily mining limit is hard-set to 5000 taps.
+
+8. CRITICAL: If you deploy through an existing Render Web Service, the persistent disk must be attached to THAT service at /var/data. Simply committing render.yaml does not retroactively attach a disk to an existing Free service.
+9. Set EARN_CHANNEL_CHAT_ID and OFFICIAL_CHANNEL_CHAT_ID to the Telegram channel @username or numeric chat ID that the bot can query with getChatMember. For a private invite link (+...), use the numeric channel ID; an invite URL alone cannot be used for membership verification.
+10. Never use localStorage as the balance source. The backend SQLite database is authoritative.

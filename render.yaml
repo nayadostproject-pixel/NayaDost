@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: NayaDost
+    name: nayadost-3
     runtime: node
     plan: starter
     region: oregon

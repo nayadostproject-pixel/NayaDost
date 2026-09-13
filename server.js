@@ -77,6 +77,8 @@ const dbPath = process.env.DB_PATH || path.join(persistentDataDir,'naya_dost.sql
 const db = new sqlite3.Database(dbPath);
 console.log('[DB] SQLite database:', dbPath);
 db.configure('busyTimeout', 10000);
+db.run('PRAGMA journal_mode=WAL');
+db.run('PRAGMA synchronous=NORMAL');
 
 db.serialize(()=>{
  db.run(`CREATE TABLE IF NOT EXISTS users(
@@ -311,15 +313,56 @@ app.post('/api/wallet/disconnect',async(req,res)=>{try{const u=await getUser(req
 // We open the channel for the user, then credit the reward once per task.
 // No Telegram Bot API membership check is required, so rewards are not blocked by
 // missing BOT_TOKEN/private-channel permissions.
+
+async function telegramApi(method, params={}){
+ const token=BOT_TOKEN;
+ if(!token) throw new Error('Telegram bot verification is not configured');
+ const qs=new URLSearchParams();
+ for(const [k,v] of Object.entries(params)){
+   if(v!==undefined && v!==null && v!=='') qs.set(k,String(v));
+ }
+ const r=await fetch(`https://api.telegram.org/bot${token}/${method}`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:qs});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok || !j.ok) throw new Error(j.description||`Telegram API ${r.status}`);
+ return j.result;
+}
+function channelChatId(task){
+ const envKey=task.id==='earn_channel'?'EARN_CHANNEL_CHAT_ID':'OFFICIAL_CHANNEL_CHAT_ID';
+ const configured=String(process.env[envKey]||'').trim();
+ if(configured) return configured;
+ const ch=String(task.channel||'').trim();
+ if(/^@[A-Za-z0-9_]{5,}$/.test(ch)) return ch;
+ const m=ch.match(/^https:\/\/t\.me\/([A-Za-z0-9_]{5,})\/?$/i);
+ return m ? '@'+m[1] : '';
+}
+async function verifyTelegramMembership(task, telegramId){
+ const chatId=channelChatId(task);
+ if(!chatId){
+   throw new Error(`Channel verification is not configured for ${task.id}. Set ${task.id==='earn_channel'?'EARN_CHANNEL_CHAT_ID':'OFFICIAL_CHANNEL_CHAT_ID'} in Render.`);
+ }
+ const member=await telegramApi('getChatMember',{chat_id:chatId,user_id:telegramId});
+ const status=String(member?.status||'');
+ if(['creator','administrator','member'].includes(status)) return true;
+ if(status==='restricted' && member?.is_member) return true;
+ throw new Error('Join the Telegram channel first, then tap Verify & Claim.');
+}
+
 app.post('/api/tasks/telegram-verify',async(req,res)=>{try{
  const u=await getUser(req.body);
  const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
  if(!task||task.type!=='telegram')throw new Error('Telegram task not found');
  const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]);
  if(claim)return res.json({ok:true,already:true,user:publicUser(u),reward:0});
- const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]);
- await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]);
- await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward);
+ await verifyTelegramMembership(task,u.telegram_id);
+ await run('BEGIN IMMEDIATE');
+ try{
+   const again=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]);
+   if(again){await run('ROLLBACK');return res.json({ok:true,already:true,user:publicUser(u),reward:0});}
+   const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]);
+   await run('UPDATE users SET balance=COALESCE(balance,0)+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]);
+   await run('COMMIT');
+   await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward);
+ }catch(e){try{await run('ROLLBACK')}catch(_){} throw e;}
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
  res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
