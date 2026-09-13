@@ -51,4 +51,4 @@ This follows the TON Connect authentication flow documented by TON Foundation: a
 
 
 ## Failed to fetch fix
-Production API is permanently configured to the NayaDost Cloudflare deployment: `https://nayadost-app.nayadost-db.workers.dev/api`. The frontend no longer uses an external-host override or Netlify URL. The Cloudflare deployment must expose the API routes under `/api` and allow Telegram Mini App requests.
+The old external/Netlify API override has been removed. The production app is intentionally same-origin: the Node/Express server must serve both `public/` and `/api`. This prevents the Mini App from silently calling an unrelated static host. The server includes CORS support, OPTIONS handling, and `GET /api/health` for diagnostics.
