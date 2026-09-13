@@ -1,0 +1,9 @@
+NayaDost final persistence fix
+=============================
+1. Deploy this project to Render using render.yaml.
+2. IMPORTANT: render.yaml uses plan: starter and a 1 GB persistent disk mounted at /var/data.
+3. Set production environment variables, especially TELEGRAM_BOT_TOKEN, APP_URL, APP_DOMAIN, ADMIN_KEY and wallet/payment settings.
+4. After deployment, open the app and refresh. The server is the source of truth for balance and daily taps.
+5. Do not switch the Render service back to Free if you want SQLite data to persist.
+6. Two Telegram tasks are hard-set to 200 NYD.
+7. Daily mining limit is hard-set to 5000 taps.

@@ -67,12 +67,16 @@ const TON_PRICE_API_URL = String(process.env.TON_PRICE_API_URL || 'https://api.c
 const REFERRAL_RATES = String(process.env.REFERRAL_RATES || '5,3,2,1,0.5').split(',').map(Number).filter(x=>Number.isFinite(x)&&x>0);
 const REFERRAL_MAX_TOTAL = Math.max(0, Number(process.env.REFERRAL_MAX_TOTAL || 15));
 
+// Persistent SQLite storage.
+// On Render, /var/data must be backed by a paid persistent disk.
+// DB_DIR/DB_PATH can be set explicitly on other hosts.
 const localDataDir = path.join(__dirname, 'data');
 const persistentDataDir = process.env.DB_DIR || (process.env.RENDER ? '/var/data' : localDataDir);
 fs.mkdirSync(persistentDataDir, {recursive:true});
 const dbPath = process.env.DB_PATH || path.join(persistentDataDir,'naya_dost.sqlite');
 const db = new sqlite3.Database(dbPath);
-console.log('[DB] SQLite:', dbPath);
+console.log('[DB] SQLite database:', dbPath);
+db.configure('busyTimeout', 10000);
 
 db.serialize(()=>{
  db.run(`CREATE TABLE IF NOT EXISTS users(
@@ -86,6 +90,7 @@ db.serialize(()=>{
  db.run(`CREATE TABLE IF NOT EXISTS referral_earnings(id INTEGER PRIMARY KEY AUTOINCREMENT, beneficiary_id INTEGER NOT NULL, source_user_id INTEGER NOT NULL, source_claim_id TEXT NOT NULL, level INTEGER NOT NULL, rate REAL NOT NULL, amount REAL NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, UNIQUE(beneficiary_id,source_claim_id,level))`);
  db.run(`CREATE TABLE IF NOT EXISTS withdrawals(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount REAL, burn REAL, net REAL, address TEXT, status TEXT DEFAULT 'Pending', admin_note TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`CREATE TABLE IF NOT EXISTS deposits(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tx_hash TEXT UNIQUE, amount REAL, asset TEXT, network TEXT, status TEXT DEFAULT 'Pending', created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
+ db.run(`CREATE TABLE IF NOT EXISTS mine_daily(user_id INTEGER NOT NULL, day TEXT NOT NULL, taps INTEGER DEFAULT 0, PRIMARY KEY(user_id,day))`);
  db.run(`CREATE TABLE IF NOT EXISTS price_history(id INTEGER PRIMARY KEY AUTOINCREMENT, price REAL, source TEXT, fetched_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`CREATE TABLE IF NOT EXISTS ton_proof_nonces(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, payload TEXT UNIQUE NOT NULL, expires_at INTEGER NOT NULL, used INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
  db.run(`CREATE TABLE IF NOT EXISTS level_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, invoice TEXT UNIQUE NOT NULL, user_id INTEGER NOT NULL, level INTEGER NOT NULL, asset TEXT NOT NULL, amount REAL NOT NULL, amount_units TEXT NOT NULL, recipient TEXT NOT NULL, sender TEXT, status TEXT DEFAULT 'Pending', tx_hash TEXT, admin_note TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
@@ -96,7 +101,9 @@ db.serialize(()=>{
   ('website','Visit Website (nydtoken.com)',1,'external',''),
   ('react','React to latest post (English)',1,'external',''),
   ('daily','Daily Check-in',5,'daily','')`,[EARN_CHANNEL,OFFICIAL_CHANNEL]);
- db.run("UPDATE tasks SET reward=200 WHERE id IN ('earn_channel','official_channel')");
+  // Migration: existing installations may already have the two Telegram tasks
+  // with the old reward. Always force these two task rewards to 200 NYD.
+  db.run("UPDATE tasks SET reward=200 WHERE id IN ('earn_channel','official_channel')");
 });
 
 db.run('ALTER TABLE users ADD COLUMN referral_reward INTEGER DEFAULT 0',()=>{});
@@ -232,22 +239,30 @@ async function verifyTonProof({address:addressText,network,public_key,walletStat
  return true;
 }
 
-app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL}})}catch(e){res.status(400).json({ok:false,error:e.message})}});
+app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); const mineMeta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]); res.json({ok:true,user:publicUser(u),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,mineDay:today,mineTaps:Number(mineMeta?.taps||0),dailyTaps:Number(mineMeta?.taps||0),serverTime:new Date().toISOString(),deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL}})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/mine',async(req,res)=>{try{
  const u=await getUser(req.body);
  const today=new Date().toISOString().slice(0,10);
- const key='mine_'+u.id+'_'+today;
- let used=0;
- const meta=await get('SELECT amount FROM deposits WHERE tx_hash=?',[key]);
- if(meta)used=Number(meta.amount)||0;
- if(used>=5000)return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached'});
- const reward=0.01*(1+Math.max(0,Number(u.miner_level||1)-1)*0.02);
- await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
- if(meta) await run('UPDATE deposits SET amount=amount+? WHERE tx_hash=?',[1,key]);
- else await run('INSERT INTO deposits(user_id,tx_hash,amount,asset,network,status) VALUES(?,?,?,?,?,?)',[u.id,key,1,'TAPS','LOCAL','Counter']);
+ const meta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]);
+ const used=Number(meta?.taps||0);
+ const LIMIT=5000;
+ if(used>=LIMIT)return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached',mineTaps:used,remaining:0,mineDay:today});
+ const reward=.01*(1+Math.max(0,Number(u.miner_level||1)-1)*.02);
+ await run('BEGIN IMMEDIATE');
+ try{
+  const locked=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]);
+  const lockedUsed=Number(locked?.taps||0);
+  if(lockedUsed>=LIMIT){await run('ROLLBACK');return res.status(400).json({ok:false,error:'Daily 5000 tap limit reached',mineTaps:lockedUsed,remaining:0,mineDay:today});}
+  if(locked) await run('UPDATE mine_daily SET taps=taps+1 WHERE user_id=? AND day=?',[u.id,today]);
+  else await run('INSERT INTO mine_daily(user_id,day,taps) VALUES(?,?,1)',[u.id,today]);
+  await run('UPDATE users SET pending_mining=COALESCE(pending_mining,0)+?,total_taps=total_taps+1,updated_at=CURRENT_TIMESTAMP WHERE id=?',[reward,u.id]);
+  await run('COMMIT');
+ }catch(e){try{await run('ROLLBACK')}catch(_){ } throw e;}
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
- res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,remaining:4999-used});
+ const finalMeta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]);
+ const count=Number(finalMeta?.taps||0);
+ res.json({ok:true,reward,balance:fresh.balance,pendingMining:Number(fresh.pending_mining||0),taps:fresh.total_taps,mineDay:today,mineTaps:count,dailyTaps:count,remaining:Math.max(0,LIMIT-count)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/claim',async(req,res)=>{try{
@@ -292,15 +307,21 @@ app.post('/api/wallet/connect',async(req,res)=>res.status(400).json({ok:false,er
 app.post('/api/verify-wallet',async(req,res)=>res.status(400).json({ok:false,error:'Wallet verification is performed automatically by TON Connect proof.'}));
 app.post('/api/wallet/disconnect',async(req,res)=>{try{const u=await getUser(req.body);await run('UPDATE users SET wallet_address=NULL,wallet_type=NULL,verified=0,updated_at=CURRENT_TIMESTAMP WHERE id=?',[u.id]);const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,user:publicUser(fresh)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
-async function telegramMemberStatus(userId, chat){
- if(!BOT_TOKEN) return {ok:false,configured:false,status:'unknown',description:'TELEGRAM_BOT_TOKEN is not configured on Render'};
- let target=String(chat||'').trim();
- if(target.startsWith('https://t.me/')){target=target.replace('https://t.me/','').replace(/^\+/,'');if(target.includes('/'))target=target.split('/')[0];if(target.startsWith('+'))return {ok:false,configured:false,status:'unknown',description:'Private invite channel needs its numeric Telegram chat ID in EARN_CHANNEL_CHAT_ID'};}
- const url=`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(target)}&user_id=${encodeURIComponent(userId)}`;
- const r=await fetch(url); const j=await r.json().catch(()=>({})); if(!j.ok)return {ok:false,configured:true,status:'unknown',description:j.description||'Telegram membership check failed'};
- const st=j.result?.status; return {ok:true,configured:true,status:st,joined:['creator','administrator','member','restricted'].includes(st)};
-}
-app.post('/api/tasks/telegram-verify',async(req,res)=>{try{const u=await getUser(req.body); if(!u.wallet_address)return res.status(400).json({ok:false,error:'Connect wallet before task verification'}); const task=await get('SELECT * FROM tasks WHERE id=?',[req.body.task_id]);if(!task||task.type!=='telegram')throw new Error('Telegram task not found'); const targetChat=task.id==='earn_channel'?(process.env.EARN_CHANNEL_CHAT_ID||task.channel):(process.env.OFFICIAL_CHANNEL_CHAT_ID||task.channel); const st=await telegramMemberStatus(u.telegram_id,targetChat); if(!st.configured)return res.status(503).json({ok:false,error:st.description||'Telegram bot verification is not configured on the server'}); if(!st.joined)return res.status(400).json({ok:false,error:'Not joined yet. Join the channel, then tap Verify again.',status:st.status}); const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]); if(claim)return res.json({ok:true,already:true,user:publicUser(u)}); const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]); await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]); await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward); const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
+// Channel tasks intentionally use a lightweight one-time claim flow.
+// We open the channel for the user, then credit the reward once per task.
+// No Telegram Bot API membership check is required, so rewards are not blocked by
+// missing BOT_TOKEN/private-channel permissions.
+app.post('/api/tasks/telegram-verify',async(req,res)=>{try{
+ const u=await getUser(req.body);
+ const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
+ if(!task||task.type!=='telegram')throw new Error('Telegram task not found');
+ const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]);
+ if(claim)return res.json({ok:true,already:true,user:publicUser(u),reward:0});
+ const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]);
+ await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]);
+ await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward);
+ const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
+ res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/tasks/claim',async(req,res)=>{try{const u=await getUser(req.body);const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
@@ -426,7 +447,7 @@ app.post('/api/level-payments',async(req,res)=>{try{const u=await getUser(req.bo
 
 app.post('/api/referrals/claim',async(req,res)=>{try{const u=await getUser(req.body);const before=await get('SELECT team_wallet FROM users WHERE id=?',[u.id]);const amount=Number(before?.team_wallet||0);if(amount<=0)throw new Error('No network rewards available');const r=await run('UPDATE users SET balance=balance+?, team_wallet=0, updated_at=CURRENT_TIMESTAMP WHERE id=? AND COALESCE(team_wallet,0)>0',[amount,u.id]);if(!r.changes)throw new Error('Network reward claim failed. Try again.');const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,reward:amount,user:publicUser(fresh)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
-app.post('/api/withdraw',async(req,res)=>{try{const u=await getUser(req.body);if(!u.wallet_address)throw new Error('Connect a wallet first');if(!u.verified)throw new Error('Verify your wallet first');const amount=Number(req.body.amount);if(!Number.isFinite(amount)||amount<10)throw new Error('Minimum withdrawal is 10 NYD');if(amount>500)throw new Error('Maximum withdrawal is 500 NYD per request');if(amount>u.balance)throw new Error('Insufficient balance');const burn=amount*0.03,net=amount-burn;await run('UPDATE users SET balance=balance-?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[amount,u.id]);const r=await run('INSERT INTO withdrawals(user_id,amount,burn,net,address) VALUES(?,?,?,?,?)',[u.id,amount,burn,net,u.wallet_address]);res.json({ok:true,id:r.lastID,amount,burn,net,balance:u.balance-amount,status:'Pending'})}catch(e){res.status(400).json({ok:false,error:e.message})}});
+app.post('/api/withdraw',async(req,res)=>{try{const u=await getUser(req.body);if(!u.wallet_address)throw new Error('Connect a wallet first');if(!u.verified)throw new Error('Verify your wallet first');const amount=Number(req.body.amount);if(!Number.isFinite(amount)||amount<10)throw new Error('Minimum withdrawal is 10 NYD');if(amount>500)throw new Error('Maximum withdrawal is 500 NYD per request');if(amount>u.balance)throw new Error('Insufficient balance');const burn=amount*0.03,net=amount-burn;const debited=await run('UPDATE users SET balance=balance-?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND balance>=?',[amount,u.id,amount]);if(!debited.changes)throw new Error('Insufficient balance');const r=await run('INSERT INTO withdrawals(user_id,amount,burn,net,address) VALUES(?,?,?,?,?)',[u.id,amount,burn,net,u.wallet_address]);res.json({ok:true,id:r.lastID,amount,burn,net,balance:u.balance-amount,status:'Pending'})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 app.post('/api/history',async(req,res)=>{try{const u=await getUser(req.body);const rows=await all('SELECT id,amount,burn,net,address,status,admin_note,created_at,updated_at FROM withdrawals WHERE user_id=? ORDER BY id DESC',[u.id]);res.json({ok:true,rows})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/deposit/status',async(req,res)=>{try{const u=await getUser(req.body);if(!TON_DEPOSIT_API_URL)return res.json({ok:true,configured:false,depositAddress:DEPOSIT_ADDRESS,credited:0,message:'Configure TON_DEPOSIT_API_URL for automatic blockchain deposit tracking'});const url=TON_DEPOSIT_API_URL.replace('{address}',encodeURIComponent(DEPOSIT_ADDRESS)).replace('{user}',encodeURIComponent(u.telegram_id));const r=await fetch(url);const j=await r.json();const amount=Number(j.amount||j.credited||0);if(Number.isFinite(amount)&&amount>0){await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[amount,u.id]);await run('INSERT INTO deposits(user_id,tx_hash,amount,asset,network,status) VALUES(?,?,?,?,?,?)',[u.id,'api-'+Date.now(),amount,'USDT','TON','Confirmed']);}const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,configured:true,credited:amount,balance:fresh.balance});}catch(e){res.status(400).json({ok:false,error:e.message})}});

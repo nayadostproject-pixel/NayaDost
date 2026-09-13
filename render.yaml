@@ -6,6 +6,9 @@ services:
     region: oregon
     buildCommand: npm install
     startCommand: npm start
+    envVars:
+      - key: DB_DIR
+        value: /var/data
     autoDeployTrigger: commit
     disk:
       name: nyd-data

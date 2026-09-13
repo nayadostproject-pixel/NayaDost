@@ -67,3 +67,13 @@ The old external/Netlify API override has been removed. The production app is in
 The defaults are usable for testing, but production should set the real receiving address and NYD price source:
 `DEPOSIT_ADDRESS`, `PAYMENT_TON_ADDRESS`, `PAYMENT_USDT_ADDRESS`, `NYD_PRICE_FALLBACK` or `NYD_PRICE_API_URL`.
 `TONCENTER_API_KEY` is optional; the public TON Center v3 endpoint is rate-limited, so adding a key is recommended for a busy production app.
+
+
+## Data persistence / balance protection
+- SQLite uses `DB_PATH` when set; otherwise on Render it uses `/var/data/naya_dost.sqlite`.
+- `render.yaml` uses a paid Render Starter web service with a 1 GB persistent disk mounted at `/var/data`.
+- This is required because Render Free web services do not provide a persistent disk for SQLite.
+- User balance, pending mining, taps, referrals, task claims, wallet verification, deposits, withdrawals and withdrawal history are stored in SQLite.
+- The frontend always refreshes balance and today's mining count from the server on bootstrap; localStorage is only a UI cache.
+- Today's mining limit is exactly 5000 taps, server-enforced.
+- The two Telegram channel tasks are forced to `200 NYD` on startup, including existing databases.
