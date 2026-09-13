@@ -2,8 +2,12 @@ services:
   - type: web
     name: NayaDost
     runtime: node
-    plan: free
+    plan: starter
     region: oregon
     buildCommand: npm install
     startCommand: npm start
     autoDeployTrigger: commit
+    disk:
+      name: nyd-data
+      mountPath: /var/data
+      sizeGB: 1

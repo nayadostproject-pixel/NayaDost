@@ -67,9 +67,12 @@ const TON_PRICE_API_URL = String(process.env.TON_PRICE_API_URL || 'https://api.c
 const REFERRAL_RATES = String(process.env.REFERRAL_RATES || '5,3,2,1,0.5').split(',').map(Number).filter(x=>Number.isFinite(x)&&x>0);
 const REFERRAL_MAX_TOTAL = Math.max(0, Number(process.env.REFERRAL_MAX_TOTAL || 15));
 
-const dataDir = path.join(__dirname, 'data');
-fs.mkdirSync(dataDir, {recursive:true});
-const db = new sqlite3.Database(path.join(dataDir,'naya_dost.sqlite'));
+const localDataDir = path.join(__dirname, 'data');
+const persistentDataDir = process.env.DB_DIR || (process.env.RENDER ? '/var/data' : localDataDir);
+fs.mkdirSync(persistentDataDir, {recursive:true});
+const dbPath = process.env.DB_PATH || path.join(persistentDataDir, 'naya_dost.sqlite');
+const db = new sqlite3.Database(dbPath);
+console.log('[DB] SQLite:', dbPath);
 
 db.serialize(()=>{
  db.run(`CREATE TABLE IF NOT EXISTS users(
@@ -429,12 +432,10 @@ app.post('/api/deposit/status',async(req,res)=>{try{const u=await getUser(req.bo
 
 app.get('/api/price',async(req,res)=>{let price=PRICE_FALLBACK,source='fallback';try{if(PRICE_API_URL){const r=await fetch(PRICE_API_URL);const j=await r.json(); const p=Number(j.price ?? j.usd ?? j.data?.price);if(Number.isFinite(p)&&p>0){price=p;source='configured-api'}}}catch{} await run('INSERT INTO price_history(price,source) VALUES(?,?)',[price,source]);res.json({ok:true,price,source,updatedAt:new Date().toISOString()})});
 
-const ADMIN_PATH = process.env.ADMIN_PATH || '/nyd-private-control-7x9k';
-app.get(ADMIN_PATH + '/panel', (req,res)=>res.sendFile(path.join(webDir,'admin.html')));
 function admin(req,res,next){if(req.headers['x-admin-key']!==ADMIN_KEY)return res.status(401).json({ok:false,error:'Unauthorized'});next()}
-app.get(ADMIN_PATH,admin,async(req,res)=>{const users=await all('SELECT id,telegram_id,username,referral_code,referrer_code,wallet_address,balance,verified,referrals,miner_level,created_at FROM users ORDER BY id DESC');const wd=await all('SELECT w.*,u.telegram_id,u.username FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC');res.json({ok:true,depositAddress:DEPOSIT_ADDRESS,users,withdrawals:wd})});
-app.post(ADMIN_PATH+'/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
-app.get(ADMIN_PATH+'/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
+app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegram_id,username,referral_code,referrer_code,wallet_address,balance,verified,referrals,miner_level,created_at FROM users ORDER BY id DESC');const wd=await all('SELECT w.*,u.telegram_id,u.username FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC');res.json({ok:true,depositAddress:DEPOSIT_ADDRESS,users,withdrawals:wd})});
+app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
+app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
 const webDir = fs.existsSync(path.join(__dirname,'public')) ? path.join(__dirname,'public') : __dirname;
 app.use((req,res,next)=>{if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
