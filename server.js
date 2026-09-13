@@ -53,7 +53,7 @@ const APP_DOMAIN = String(process.env.APP_DOMAIN || '');
 const TON_NETWORK = String(process.env.TON_NETWORK || '-239');
 const TON_PROOF_TTL = Math.max(60, Number(process.env.TON_PROOF_TTL || 900));
 const PAYMENT_TON_ADDRESS = process.env.PAYMENT_TON_ADDRESS || DEPOSIT_ADDRESS;
-const PAYMENT_USDT_ADDRESS = String(process.env.PAYMENT_USDT_ADDRESS || DEPOSIT_ADDRESS).trim();
+const PAYMENT_USDT_ADDRESS = String(process.env.PAYMENT_USDT_ADDRESS || DEPOSIT_ADDRESS).trim() || DEPOSIT_ADDRESS;
 const USDT_MASTER = process.env.USDT_MASTER || 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs';
 const TONAPI_BASE_URL = String(process.env.TONAPI_BASE_URL || 'https://tonapi.io').replace(/\/$/,'');
 const TONAPI_API_KEY = process.env.TONAPI_API_KEY || '';
@@ -286,14 +286,17 @@ app.post('/api/ton-proof/verify',async(req,res)=>{try{
 // Deliberately reject manual address binding. Wallet addresses must come from TON Connect + ton_proof.
 app.post('/api/wallet/connect',async(req,res)=>res.status(400).json({ok:false,error:'Manual wallet addresses are disabled. Use Connect Wallet through Telegram/TON Connect.'}));
 app.post('/api/verify-wallet',async(req,res)=>res.status(400).json({ok:false,error:'Wallet verification is performed automatically by TON Connect proof.'}));
+app.post('/api/wallet/disconnect',async(req,res)=>{try{const u=await getUser(req.body);await run('UPDATE users SET wallet_address=NULL,wallet_type=NULL,verified=0,updated_at=CURRENT_TIMESTAMP WHERE id=?',[u.id]);const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,user:publicUser(fresh)})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 async function telegramMemberStatus(userId, chat){
- if(!BOT_TOKEN) return {ok:false,configured:false,status:'unknown'};
- const url=`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(chat)}&user_id=${encodeURIComponent(userId)}`;
- const r=await fetch(url); const j=await r.json(); if(!j.ok)return {ok:false,configured:true,status:'unknown',description:j.description};
- const s=j.result.status; return {ok:true,configured:true,status:s,joined:['creator','administrator','member'].includes(s)};
+ if(!BOT_TOKEN) return {ok:false,configured:false,status:'unknown',description:'TELEGRAM_BOT_TOKEN is not configured on Render'};
+ let target=String(chat||'').trim();
+ if(target.startsWith('https://t.me/')){target=target.replace('https://t.me/','').replace(/^\+/,'');if(target.includes('/'))target=target.split('/')[0];if(target.startsWith('+'))return {ok:false,configured:false,status:'unknown',description:'Private invite channel needs its numeric Telegram chat ID in EARN_CHANNEL_CHAT_ID'};}
+ const url=`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(target)}&user_id=${encodeURIComponent(userId)}`;
+ const r=await fetch(url); const j=await r.json().catch(()=>({})); if(!j.ok)return {ok:false,configured:true,status:'unknown',description:j.description||'Telegram membership check failed'};
+ const st=j.result?.status; return {ok:true,configured:true,status:st,joined:['creator','administrator','member','restricted'].includes(st)};
 }
-app.post('/api/tasks/telegram-verify',async(req,res)=>{try{const u=await getUser(req.body); if(!u.wallet_address)return res.status(400).json({ok:false,error:'Connect wallet before task verification'}); const task=await get('SELECT * FROM tasks WHERE id=?',[req.body.task_id]);if(!task||task.type!=='telegram')throw new Error('Telegram task not found'); const st=await telegramMemberStatus(u.telegram_id,task.channel); if(!st.configured)return res.status(503).json({ok:false,error:'Telegram bot verification is not configured on the server'}); if(!st.joined)return res.status(400).json({ok:false,error:'Not joined yet. Join the channel, then tap Verify again.',status:st.status}); const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]); if(claim)return res.json({ok:true,already:true,user:publicUser(u)}); const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]); await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]); await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward); const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
+app.post('/api/tasks/telegram-verify',async(req,res)=>{try{const u=await getUser(req.body); if(!u.wallet_address)return res.status(400).json({ok:false,error:'Connect wallet before task verification'}); const task=await get('SELECT * FROM tasks WHERE id=?',[req.body.task_id]);if(!task||task.type!=='telegram')throw new Error('Telegram task not found'); const targetChat=task.id==='earn_channel'?(process.env.EARN_CHANNEL_CHAT_ID||task.channel):(process.env.OFFICIAL_CHANNEL_CHAT_ID||task.channel); const st=await telegramMemberStatus(u.telegram_id,targetChat); if(!st.configured)return res.status(503).json({ok:false,error:st.description||'Telegram bot verification is not configured on the server'}); if(!st.joined)return res.status(400).json({ok:false,error:'Not joined yet. Join the channel, then tap Verify again.',status:st.status}); const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,task.id]); if(claim)return res.json({ok:true,already:true,user:publicUser(u)}); const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,task.id]); await run('UPDATE users SET balance=balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]); await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward); const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/tasks/claim',async(req,res)=>{try{const u=await getUser(req.body);const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
@@ -335,12 +338,23 @@ async function verifyLevelPayment(p){
  const sender=rawAddress(p.sender), recipient=rawAddress(p.recipient);
  const start=Math.floor(new Date(p.created_at+'Z').getTime()/1000)-60;
  if(p.asset==='USDT'){
-   const qs=new URLSearchParams({jetton_master:USDT_MASTER,direction:'in',start_utime:String(start),limit:'100',sort:'desc'});
+   const qs=new URLSearchParams({jetton_master:USDT_MASTER,owner_address:recipient,direction:'in',start_utime:String(start),limit:'100',sort:'desc'});
    const data=await fetchTonCenter(`${TONCENTER_BASE_URL}/jetton/transfers?${qs}`);
    for(const t of (data.jetton_transfers||[])){
      if(t.transaction_aborted)continue;
      if(rawAddress(t.destination)!==recipient)continue;
-     if(sender && rawAddress(t.source)!==sender)continue;
+     if(sender){
+       const sourceOwner=t.source_wallet||t.source||'';
+       let ownerOk=rawAddress(sourceOwner)===sender;
+       if(!ownerOk && t.source){
+         try{
+           const ownerQs=new URLSearchParams({owner_address:sender,jetton_address:USDT_MASTER,limit:'100'});
+           const jw=await fetchTonCenter(`${TONCENTER_BASE_URL}/jetton/wallets?${ownerQs}`);
+           ownerOk=(jw.jetton_wallets||[]).some(w=>rawAddress(w.address)===rawAddress(t.source));
+         }catch{}
+       }
+       if(!ownerOk)continue;
+     }
      if(BigInt(String(t.amount||0))<expected)continue;
      return {confirmed:true,txHash:t.transaction_hash||t.trace_id||''};
    }
@@ -421,6 +435,7 @@ app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.stat
 app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
 const webDir = fs.existsSync(path.join(__dirname,'public')) ? path.join(__dirname,'public') : __dirname;
-app.use(express.static(webDir));
-app.get('*',(req,res)=>res.sendFile(path.join(webDir,'index.html')));
+app.use((req,res,next)=>{if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
+app.use(express.static(webDir,{etag:false,maxAge:0}));
+app.get('*',(req,res)=>res.sendFile(path.join(webDir,'index.html'),{headers:{'Cache-Control':'no-store, no-cache, must-revalidate, proxy-revalidate'}}));
 app.listen(PORT,()=>console.log(`NayaDost Mining running on http://localhost:${PORT}`));
