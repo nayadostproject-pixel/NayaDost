@@ -104,17 +104,14 @@ db.serialize(()=>{
   ('youtube','YouTube Like & Comment (Videos + Shorts)',1,'external',''),
   ('earn_channel','NYD EARN PAYMENT CHANNEL — Join & Verify',100,'telegram',?),
   ('official_channel','Official Channel — Join & Verify',100,'telegram',?),
-  ('site','Visit Website (nydtoken.com)',1,'external',''),
+  ('website','Visit Website (nydtoken.com)',1,'external',''),
   ('react','React to latest post (English)',1,'external',''),
-  ('x','Follow X @NayaDost_ton',100,'external',''),
+  ('x','Follow X @OfficialNayaDost',100,'external',''),
   ('daily','Daily Check-in',5,'daily','')`,[EARN_CHANNEL,OFFICIAL_CHANNEL]);
   // Migration: existing installations may already have the two Telegram tasks
   // with the old reward. Always force these two task rewards to 100 NYD.
   db.run("UPDATE tasks SET reward=100 WHERE id IN ('earn_channel','official_channel')");
   db.run("UPDATE tasks SET reward=100 WHERE id='x'");
-  // Migrate the old website task id/title so frontend and backend use one canonical id.
-  db.run("UPDATE tasks SET id='site', title='Visit Website (nydtoken.com)' WHERE id='website' AND NOT EXISTS (SELECT 1 FROM tasks WHERE id='site')");
-  db.run("UPDATE tasks SET title='Follow X @NayaDost_ton', reward=100 WHERE id='x'");
 });
 
 db.run('ALTER TABLE users ADD COLUMN referral_reward INTEGER DEFAULT 0',()=>{});
@@ -413,7 +410,7 @@ function telegramNextAvailable(){ return (telegramCycleKey()+1)*2*60*60*1000; }
 async function verifyTelegramMembership(task, telegramId){
  const chatId=channelChatId(task);
  if(!chatId){
-   throw new Error(`Telegram verification is not configured for ${task.id}. Set ${task.id==='earn_channel'?'EARN_CHANNEL_CHAT_ID':'OFFICIAL_CHANNEL_CHAT_ID'} in Render.`);
+   throw new Error(`Channel verification is not configured for ${task.id}. Set ${task.id==='earn_channel'?'EARN_CHANNEL_CHAT_ID':'OFFICIAL_CHANNEL_CHAT_ID'} in Render.`);
  }
  const member=await telegramApi('getChatMember',{chat_id:chatId,user_id:telegramId});
  const status=String(member?.status||'');
@@ -766,9 +763,13 @@ app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegra
 app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
 app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
+// Never let an unknown /api request fall through to the HTML app shell.
+// This prevents the Mini App from receiving a 200 HTML page where JSON was expected.
+app.use('/api',(req,res)=>res.status(404).json({ok:false,error:'API endpoint not found'}));
+
 const webDir = path.join(__dirname,'public');
 if (!fs.existsSync(webDir)) throw new Error('Required public directory missing: '+webDir);
-app.use((req,res,next)=>{res.setHeader('X-NYD-Build','BUGFIX-5000-TAPS-TASKS-VIP-2026-09-14'); if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
+app.use((req,res,next)=>{res.setHeader('X-NYD-Build','VIP-TWITTER-100-PRICE-ONLY'); if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
 app.use(express.static(webDir,{etag:false,maxAge:0}));
 app.get('*',(req,res)=>res.sendFile(path.join(webDir,'index.html'),{headers:{'Cache-Control':'no-store, no-cache, must-revalidate, proxy-revalidate'}}));
 app.listen(PORT,()=>console.log(`NayaDost Mining running on http://localhost:${PORT}`));

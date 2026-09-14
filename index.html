@@ -214,7 +214,7 @@ async function claimMining(){
  try{
   const j=await api('/claim',{method:'POST',body:{}});
   state={...state,...j.user,telegramId:j.user.id};save();renderTasks();playFx('claim');showToast('Claimed +'+fmt(j.claimed,4)+' NYD');
- }catch(e){showToast(e.message)}
+ }catch(e){showToast(e.message)}finally{claimBusy=false;if(btn)btn.disabled=false}
 }
 
 
@@ -232,7 +232,7 @@ async function rewardTask(id){const t=TASKS.find(x=>x.id===id);if(!t)return;cons
  const dailyClaimed=t.daily&&state.dailyClaimKey===dayKey();
  if((state.claimedTasks[id]&&!t.daily)||dailyClaimed){showToast('Already claimed');return}
  if(t.daily){try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.dailyClaimKey=j.dailyKey||dayKey();save();renderTasks();showToast('Daily +'+fmt(j.reward,2)+' NYD added')}catch(e){showToast(e.message)}return}
- if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){const st=TELEGRAM_TASK_STATUS[id]; if(st?.claimed && Date.now()<Number(st.nextAvailable||0)){showToast('Available again in '+timeLeft(st.nextAvailable));return} openTaskLink(t.url);setTimeout(async()=>{try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};TELEGRAM_TASK_STATUS[id]={claimed:true,nextAvailable:Number(j.nextAvailable||Date.now()+7200000)};save();renderTasks();showToast(j.already?'Already claimed':'Verified & claimed +'+fmt(j.reward,2)+' NYD')}catch(e){showToast(e.message)}},1500);return}if(t.url)openTaskLink(t.url);try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
+ if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){const st=TELEGRAM_TASK_STATUS[id]; if(st?.claimed && Date.now()<Number(st.nextAvailable||0)){showToast('Available again in '+timeLeft(st.nextAvailable));return} state.taskAwaiting=state.taskAwaiting||{}; if(!state.taskAwaiting[id]){state.taskAwaiting[id]=true;save();openTaskLink(t.url);showToast('Join the channel, then tap Verify & Claim again.');return} try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};delete state.taskAwaiting[id];TELEGRAM_TASK_STATUS[id]={claimed:true,nextAvailable:Number(j.nextAvailable||Date.now()+7200000)};save();renderTasks();showToast(j.already?'Already claimed':'Verified & claimed +'+fmt(j.reward,2)+' NYD')}catch(e){showToast(e.message)}return}if(t.url)openTaskLink(t.url);try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
 function timeLeft(ms){let x=Math.max(0,Number(ms||0)-Date.now());const h=Math.floor(x/3600000),m=Math.floor((x%3600000)/60000),sec=Math.floor((x%60000)/1000);return h?`${h}h ${m}m`:m?`${m}m ${sec}s`:`${sec}s`}
 function renderTasks(){const list=document.getElementById('taskList');if(!list)return;const arr=TASKS.filter(t=>currentFilter==='all'||t.cat===currentFilter);list.innerHTML=arr.map(t=>{const st=t.telegram?TELEGRAM_TASK_STATUS[t.id]:null;const claimed=t.daily?state.dailyClaimKey===dayKey():t.telegram?!!(st?.claimed&&Date.now()<Number(st.nextAvailable||0)):!!state.claimedTasks[t.id];const blocked=t.profile&&!state.verified;const refBlocked=t.ref&&state.successfulReferrals<1;const label=claimed?(t.telegram?'Again in '+timeLeft(st.nextAvailable):'Claimed'):blocked?'Verify':refBlocked?'Invite':t.telegram?'Verify & Claim':'Go';const reward=Number(SERVER_TASKS[t.id]?.reward ?? t.reward);return `<div class="task ${claimed?'claimed':''}"><div class="task-icon">${t.icon}</div><div class="task-body"><strong>${t.name}</strong><span>${claimed?(t.telegram?'Next claim: '+timeLeft(st.nextAvailable):'Claimed'):blocked?'Wallet verification required':refBlocked?'Requires 1 successful referral':'+'+fmt(reward,reward%1?1:0)+' NYD'}</span></div><button class="${claimed?'done':'go'}" onclick="rewardTask('${t.id}')">${label}</button></div>`}).join('')}
 function selectTab(btn){document.querySelectorAll('#taskTabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;renderTasks()}
@@ -395,8 +395,8 @@ window.addEventListener('load',async()=>{initTelegram();render();renderTasks();r
 window.addEventListener('pageshow',()=>{if(document.visibilityState==='visible')refreshFromServer('pageshow').catch(()=>{});});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshFromServer('visible').catch(()=>{});});
 </script>
-<script defer src="https://telegram.org/js/telegram-web-app.js"></script>
-<script defer src="https://unpkg.com/@tonconnect/ui@3.0.2/dist/tonconnect-ui.min.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/@tonconnect/ui@3.0.2/dist/tonconnect-ui.min.js"></script>
 <script>
 (function(){
   try{
