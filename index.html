@@ -39,7 +39,20 @@ button,input{font:inherit}button{border:0;cursor:pointer;color:#fff}button:disab
 .toast{position:fixed;left:50%;bottom:86px;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:9px 14px;background:#0b3157;border:1px solid #25c1ff;border-radius:10px;font-size:10px;z-index:100;transition:.25s;box-shadow:0 0 20px #007dff55}.toast.show{transform:translate(-50%,0);opacity:1}.float{position:absolute;pointer-events:none;font-weight:1000;color:#25eaff;text-shadow:0 0 10px #00baff;animation:floatUp .8s ease-out forwards;z-index:5}@keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-75px) scale(1.25)}}
 @media(min-width:700px){body{padding:20px}.app{min-height:calc(100vh - 40px);border-radius:24px;border:1px solid #123e61}.bottom-nav{bottom:20px;border-radius:0 0 24px 24px}}
 
-.pending-claim{margin:6px auto 2px;padding:5px 11px;width:max-content;max-width:95%;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid #1c8fcb;color:#8ff5ff;font-size:10px;font-weight:900;box-shadow:inset 0 0 12px rgba(0,207,255,.08)}.claim-btn{transition:transform .15s,filter .15s,box-shadow .15s}.claim-btn.ready{animation:claimPulse 1.8s ease-in-out infinite}.claim-btn:active{transform:scale(.985)}.mine-box.tap-flash{animation:tapFlash .22s ease-out}.mine-circle.tap-spin{animation:coinTap .38s cubic-bezier(.2,.8,.2,1)}.mine-circle:before,.mine-circle:after{content:"";position:absolute;left:50%;top:50%;width:190px;height:190px;border:2px solid #19eaff;border-radius:50%;transform:translate(-50%,-50%) scale(.72);opacity:0;pointer-events:none}.mine-circle{position:relative}.mine-circle.tap-spin:before{animation:tapRing .48s ease-out}.mine-circle.tap-spin:after{animation:tapRing .62s .05s ease-out}.tap-sparks{position:absolute;left:50%;top:50%;width:10px;height:10px;pointer-events:none}.tap-sparks i{position:absolute;width:5px;height:18px;border-radius:4px;background:#21eaff;box-shadow:0 0 10px #21eaff;transform-origin:50% 80%;animation:sparkFly .45s ease-out forwards}.tap-sparks i:nth-child(1){transform:rotate(0deg)}.tap-sparks i:nth-child(2){transform:rotate(45deg)}.tap-sparks i:nth-child(3){transform:rotate(90deg)}.tap-sparks i:nth-child(4){transform:rotate(135deg)}.tap-sparks i:nth-child(5){transform:rotate(180deg)}.tap-sparks i:nth-child(6){transform:rotate(225deg)}.tap-sparks i:nth-child(7){transform:rotate(270deg)}.tap-sparks i:nth-child(8){transform:rotate(315deg)}@keyframes coinTap{0%{transform:scale(1) rotate(0)}30%{transform:scale(.88) rotate(-5deg)}65%{transform:scale(1.08) rotate(4deg)}100%{transform:scale(1) rotate(0)}}@keyframes tapRing{0%{transform:translate(-50%,-50%) scale(.7);opacity:.75}100%{transform:translate(-50%,-50%) scale(1.45);opacity:0}}@keyframes sparkFly{0%{transform:rotate(var(--r,0deg)) translateY(-55px) scale(.8);opacity:1}100%{transform:rotate(var(--r,0deg)) translateY(-105px) scale(0);opacity:0}}@keyframes tapFlash{0%{filter:brightness(1)}35%{filter:brightness(1.35)}100%{filter:brightness(1)}}@keyframes claimPulse{0%,100%{box-shadow:0 0 24px rgba(157,32,255,.5)}50%{box-shadow:0 0 34px rgba(157,32,255,.85)}}</style>
+.pending-claim{margin:6px auto 2px;padding:5px 11px;width:max-content;max-width:95%;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid #1c8fcb;color:#8ff5ff;font-size:10px;font-weight:900;box-shadow:inset 0 0 12px rgba(0,207,255,.08)}.claim-btn{transition:transform .15s,filter .15s,box-shadow .15s}.claim-btn.ready{animation:claimPulse 1.8s ease-in-out infinite}.claim-btn:active{transform:scale(.985)}.mine-box.tap-flash{animation:tapFlash .22s ease-out}.mine-circle.tap-spin{animation:coinTap .38s cubic-bezier(.2,.8,.2,1)}.mine-circle:before,.mine-circle:after{content:"";position:absolute;left:50%;top:50%;width:190px;height:190px;border:2px solid #19eaff;border-radius:50%;transform:translate(-50%,-50%) scale(.72);opacity:0;pointer-events:none}.mine-circle{position:relative}.mine-circle.tap-spin:before{animation:tapRing .48s ease-out}.mine-circle.tap-spin:after{animation:tapRing .62s .05s ease-out}.tap-sparks{position:absolute;left:50%;top:50%;width:10px;height:10px;pointer-events:none}.tap-sparks i{position:absolute;width:5px;height:18px;border-radius:4px;background:#21eaff;box-shadow:0 0 10px #21eaff;transform-origin:50% 80%;animation:sparkFly .45s ease-out forwards}.tap-sparks i:nth-child(1){transform:rotate(0deg)}.tap-sparks i:nth-child(2){transform:rotate(45deg)}.tap-sparks i:nth-child(3){transform:rotate(90deg)}.tap-sparks i:nth-child(4){transform:rotate(135deg)}.tap-sparks i:nth-child(5){transform:rotate(180deg)}.tap-sparks i:nth-child(6){transform:rotate(225deg)}.tap-sparks i:nth-child(7){transform:rotate(270deg)}.tap-sparks i:nth-child(8){transform:rotate(315deg)}@keyframes coinTap{0%{transform:scale(1) rotate(0)}30%{transform:scale(.88) rotate(-5deg)}65%{transform:scale(1.08) rotate(4deg)}100%{transform:scale(1) rotate(0)}}@keyframes tapRing{0%{transform:translate(-50%,-50%) scale(.7);opacity:.75}100%{transform:translate(-50%,-50%) scale(1.45);opacity:0}}@keyframes sparkFly{0%{transform:rotate(var(--r,0deg)) translateY(-55px) scale(.8);opacity:1}100%{transform:rotate(var(--r,0deg)) translateY(-105px) scale(0);opacity:0}}@keyframes tapFlash{0%{filter:brightness(1)}35%{filter:brightness(1.35)}100%{filter:brightness(1)}}@keyframes claimPulse{0%,100%{box-shadow:0 0 24px rgba(157,32,255,.5)}50%{box-shadow:0 0 34px rgba(157,32,255,.85)}}
+.miner-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.miner-stat{padding:10px;border:1px solid #24345e;border-radius:12px;background:#0d1735;text-align:center}
+.miner-stat .ms-label{font-size:8px;color:#8ea5cf;text-transform:uppercase;letter-spacing:.5px}
+.miner-stat .ms-value{font-size:12px;font-weight:950;margin-top:4px}
+.miner-stat .up{color:#38e6a3}.miner-stat .down{color:#ff668f}
+.pnl-chart{position:relative;margin-top:10px}
+.pnl-chart svg{width:100%;height:150px;display:block}
+.pnl-line-balance{fill:none;stroke:#27d8ff;stroke-width:3}
+.pnl-line-withdraw{fill:none;stroke:#ff668f;stroke-width:3}
+.pnl-dot-balance{fill:#27d8ff}.pnl-dot-withdraw{fill:#ff668f}
+.pnl-legend{display:flex;justify-content:center;gap:16px;font-size:9px;color:#a9b9d8;margin-top:5px}
+.pnl-legend span{display:inline-flex;align-items:center;gap:5px}.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+</style>
 </head>
 <body>
 <div class="app" id="app">
@@ -63,7 +76,7 @@ button,input{font:inherit}button{border:0;cursor:pointer;color:#fff}button:disab
 </div>
 <button class="claim-btn" id="mainClaimBtn" onclick="claimMining()">CLAIM <span id="claimAmount">0.0000</span> NYD</button>
 <div class="invite" onclick="openScreen('friends')"><div class="gift">🎁</div><div><div class="invite-title">Invite Friends</div><div class="small">Get 100 NYD instantly per successful referral</div></div><div class="arrow">›</div></div>
-<div class="card" onclick="openDeposit()" style="cursor:pointer"><div class="friend-card"><div class="friend-icon">💎</div><div class="friend-main"><div class="friend-title">Deposit TON USDT</div><div class="friend-value">Deposit to increase mining speed · NYD price <b id="livePrice">$0.0010</b></div></div><div class="value">QR ›</div></div></div>
+<div class="card" onclick="openDeposit()" style="cursor:pointer"><div class="friend-card"><div class="friend-icon">💎</div><div class="friend-main"><div class="friend-title">Deposit TON USDT</div><div class="friend-value">Deposit to increase mining speed · NYD price <b id="livePrice">$0.0005</b></div></div><div class="value">QR ›</div></div></div>
 <div class="section-title">Quick Rewards</div>
 <div class="task" onclick="openScreen('tasks')"><div class="task-icon">⚡</div><div class="task-body"><strong>Complete tasks</strong><span>Earn NYD rewards in the Tasks section</span></div><div>›</div></div>
 </section>
@@ -77,7 +90,27 @@ button,input{font:inherit}button{border:0;cursor:pointer;color:#fff}button:disab
 
 <section class="screen" id="miners">
 <header class="header"><div><div class="page-title" style="text-align:left">Miner Store</div><div class="subtitle">Auto-unlocks based on your NYD holding.</div></div><div class="spacer"></div></header>
-<div class="card"><div class="store-head"><div><div class="label">MY LEVEL JOURNEY</div><div class="card-title" id="journeyTitle" style="font-size:17px;font-weight:950;margin-top:4px">Level 1 · Peak 96</div></div><div class="peak" id="peakText">▽ 95 from peak</div></div><div class="green" style="font-size:10px;margin-top:6px">Today's P&L <b id="pnl">+0.0000 NYD</b></div><div class="chart"><svg viewBox="0 0 500 160" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d035ff" stop-opacity=".55"/><stop offset="1" stop-color="#d035ff" stop-opacity="0"/></linearGradient></defs><path d="M0 135 C45 65 70 80 100 35 S180 55 225 95 S310 125 360 75 S430 45 500 55 L500 160 L0 160Z" fill="url(#g)"/><path d="M0 135 C45 65 70 80 100 35 S180 55 225 95 S310 125 360 75 S430 45 500 55" fill="none" stroke="#d63cff" stroke-width="3"/></svg></div><div class="chart-note">☑ Tap to view full PNL chart →</div></div>
+<div class="card"><div class="store-head"><div><div class="label">MY LEVEL JOURNEY</div><div class="card-title" id="journeyTitle" style="font-size:17px;font-weight:950;margin-top:4px">Level 1 · Peak 96</div></div><div class="peak" id="peakText">▽ 95 from peak</div></div><div class="green" style="font-size:10px;margin-top:6px">Today's P&L <b id="pnl">+0.0000 NYD</b></div>
+<div class="miner-stat-grid">
+  <div class="miner-stat"><div class="ms-label">Balance</div><div class="ms-value" id="minerBalance">0.0000 NYD</div></div>
+  <div class="miner-stat"><div class="ms-label">Withdrawn</div><div class="ms-value down" id="minerWithdrawn">0.0000 NYD</div></div>
+  <div class="miner-stat"><div class="ms-label">NYD Price</div><div class="ms-value" id="minerPrice">$0.0005</div></div>
+</div>
+<div class="pnl-chart">
+  <svg id="pnlChart" viewBox="0 0 500 160" preserveAspectRatio="none">
+    <polyline id="balanceLine" class="pnl-line-balance" points="0,145 125,120 250,90 375,65 500,45"/>
+    <polyline id="withdrawLine" class="pnl-line-withdraw" points="0,145 125,145 250,135 375,120 500,105"/>
+    <g id="balanceDots"></g><g id="withdrawDots"></g>
+  </svg>
+  <div class="pnl-legend"><span><i class="legend-dot" style="background:#27d8ff"></i>Balance</span><span><i class="legend-dot" style="background:#ff668f"></i>Withdrawn</span></div>
+</div>
+<div class="chart-note">Balance ↑ · Withdrawals ↓ · Today's earnings and P&L are calculated from saved activity.</div></div>
+<div id="vipMinerCard" class="card" style="margin-top:12px;border:1px solid #8c42ff;background:linear-gradient(135deg,#111b3b,#19103a)">
+  <div class="store-head"><div><div class="label">VIP AUTO MINER</div><div class="card-title" style="font-size:17px;font-weight:950;margin-top:4px">⚡ High-Speed Auto Tap</div></div><div id="vipBadge" class="peak">LOCKED</div></div>
+  <div id="vipInfo" class="subtitle" style="margin-top:7px">Unlock VIP for $25 USDT on TON. Auto mining + auto claim.</div>
+  <div id="vipRate" class="green" style="font-size:12px;margin-top:7px;font-weight:900">0.100 NYD / second</div>
+  <button id="vipBuyBtn" class="primary full" style="margin-top:10px" onclick="openVipPurchase()">🔒 Buy VIP — $25 USDT</button>
+</div>
 <div class="levels" id="levels"></div>
 </section>
 
@@ -131,8 +164,8 @@ const OFFICIAL_CHANNEL='https://t.me/NYDEarn_Official';
 const BOT_FALLBACK='NayaDostMining_NYD_bot';
 const TASKS=[
  {id:'youtube',cat:'social',icon:'▶',name:'YouTube Like & Comment (Videos + Shorts)',reward:1,url:'https://www.youtube.com/'},
- {id:'earn_channel',cat:'telegram',icon:'✈',name:'NYD EARN PAYMENT CHANNEL — Join & Verify',reward:200,telegram:true,url:EARN_CHANNEL},
- {id:'official_channel',cat:'telegram',icon:'✈',name:'OFFICIAL CHANNEL — Join & Verify',reward:200,telegram:true,url:OFFICIAL_CHANNEL},
+ {id:'earn_channel',cat:'telegram',icon:'✈',name:'NYD EARN PAYMENT CHANNEL — Join & Verify',reward:100,telegram:true,url:EARN_CHANNEL},
+ {id:'official_channel',cat:'telegram',icon:'✈',name:'OFFICIAL CHANNEL — Join & Verify',reward:100,telegram:true,url:OFFICIAL_CHANNEL},
  {id:'x',cat:'social',icon:'𝕏',name:'X (Twitter) Retweet',reward:1,url:'https://x.com/'},
  {id:'site',cat:'other',icon:'🌐',name:'Visit Website (nydtoken.com)',reward:1,url:'https://nydtoken.com/'},
  {id:'react',cat:'social',icon:'🔥',name:'React to latest post (English)',reward:1,url:OFFICIAL_CHANNEL},
@@ -140,7 +173,7 @@ const TASKS=[
  {id:'profile',cat:'other',icon:'●',name:'Complete Profile',reward:10,profile:true},
  {id:'invite',cat:'other',icon:'♟',name:'Invite 1 Friend',reward:50,ref:true}
 ];
-const MAX_LEVEL=1000;let SERVER_TASKS={};
+const MAX_LEVEL=1000;let SERVER_TASKS={}; let TELEGRAM_TASK_STATUS={};
 const LEVELS=Array.from({length:MAX_LEVEL},(_,i)=>{const level=i+1;const reward=level===1?0:(0.0703+(level-2)*0.0015);const cost=level===1?0:Math.ceil(100*Math.pow(level-1,1.35));const speed=.20+(level-1)*.05;return {level,reward,cost,speed}});
 let visibleLevelCount=20;
 const DEFAULT={telegramId:'',wallet:'',walletType:'TON',verified:false,balance:0,taps:0,todayEarned:0,referrals:0,successfulReferrals:0,referralReward:0,teamWallet:0,pendingMining:0,withdrawals:[],claimedTasks:{},dailyClaimKey:'',level:1,sound:false,inviteCode:null,profileName:'NayaDost Miner',handle:'@miner'};
@@ -156,7 +189,7 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function beep(freq=520,dur=.06){if(!state.sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.035,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}catch(e){}}
 async function api(path,options={}){const u=tgUser();const method=(options.method||'GET').toUpperCase();const body=Object.assign({telegram_id:uid(),username:u?.username||'',first_name:u?.first_name||state.profileName,last_name:u?.last_name||'',referrer_code:window.Telegram?.WebApp?.initDataUnsafe?.start_param||''},options.body||{});const cfg={...options,method,headers:{'Content-Type':'application/json','X-Telegram-Init-Data':window.Telegram?.WebApp?.initData||'',...(options.headers||{})}};if(method!=='GET')cfg.body=JSON.stringify(body);else cfg.headers['X-Telegram-User']=JSON.stringify(body);const url=new URL(API+path,window.location.origin).toString();let r;try{r=await fetch(url,cfg)}catch(e){await new Promise(r=>setTimeout(r,250));try{r=await fetch(url,cfg)}catch(e2){throw new Error('NayaDost backend is not reachable. Refresh the Mini App and open it from the live NayaDost server.')}}const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error(`Backend returned invalid JSON (${r.status})`)}if(!j)throw new Error(`Backend returned an empty response (${r.status})`);if(!r.ok||j.ok===false)throw new Error(j.error||`Request failed (${r.status})`);return j}
 async function syncPendingLevelPayments(){try{const j=await api('/level-payments',{method:'POST',body:{}});for(const p of (j.rows||[]).filter(x=>x.status==='Pending').slice(0,3)){try{const c=await api('/level-payment/confirm',{method:'POST',body:{invoice:p.invoice}});if(c.confirmed){state={...state,...c.user,telegramId:c.user.id};save();showToast('Level '+c.level+' payment confirmed ✓');}}catch(e){}}renderMiners()}catch(e){}}
-async function bootstrap(){try{const u=tgUser();if(u){state.telegramId=String(u.id);state.profileName=[u.first_name,u.last_name].filter(Boolean).join(' ')||state.profileName;state.handle=u.username?'@'+u.username:state.handle}const j=await api('/bootstrap');state={...state,...j.user,telegramId:j.user.id,pendingMining:Number(j.user.pendingMining||0),mineDay:j.mineDay||dayKey(),mineTaps:Number(j.dailyTaps ?? j.mineTaps ?? 0),dailyClaimKey:j.dailyClaimed?dayKey():state.dailyClaimKey,inviteCode:j.user.referralCode||state.inviteCode};PAYMENT_CONFIG={...PAYMENT_CONFIG,...(j.payments||{})};state.claimedTasks={...(state.claimedTasks||{})};(j.claims||[]).forEach(x=>state.claimedTasks[x]=true);SERVER_TASKS={};(j.tasks||[]).forEach(x=>SERVER_TASKS[x.id]=x);save();renderTasks();renderMiners();}catch(e){render();renderTasks();renderMiners();showToast('Offline mode: '+e.message)}}
+async function bootstrap(){try{const u=tgUser();if(u){state.telegramId=String(u.id);state.profileName=[u.first_name,u.last_name].filter(Boolean).join(' ')||state.profileName;state.handle=u.username?'@'+u.username:state.handle}const j=await api('/bootstrap');state={...state,...j.user,telegramId:j.user.id,pendingMining:Number(j.user.pendingMining||0),mineDay:j.mineDay||dayKey(),mineTaps:Number(j.dailyTaps ?? j.mineTaps ?? 0),dailyClaimKey:j.dailyClaimed?dayKey():state.dailyClaimKey,inviteCode:j.user.referralCode||state.inviteCode};PAYMENT_CONFIG={...PAYMENT_CONFIG,...(j.payments||{})}; VIP_STATUS={active:!!j.user.vipActive,priceUsdt:Number(j.payments?.vipPriceUsdt||25),ratePerSecond:Number(j.payments?.vipRatePerSecond||.1),address:j.payments?.vipUsdtAddress||j.payments?.usdtAddress||DEPOSIT_ADDRESS}; state.claimedTasks={...(state.claimedTasks||{})};(j.claims||[]).forEach(x=>state.claimedTasks[x]=true);SERVER_TASKS={};(j.tasks||[]).forEach(x=>SERVER_TASKS[x.id]=x); TELEGRAM_TASK_STATUS=j.telegramTaskStatuses||{}; save();renderTasks();renderMiners();}catch(e){render();renderTasks();renderMiners();showToast('Offline mode: '+e.message)}}
 async function mine(){if((state.mineDay||dayKey())!==dayKey()){state.mineDay=dayKey();state.mineTaps=0}state.mineTaps=Math.max(0,Number(state.mineTaps||0));if(state.mineTaps>=5000){showToast('Daily 5000 taps reached');return}try{const j=await api('/mine',{method:'POST',body:{}});state.balance=j.balance;state.pendingMining=Number(j.pendingMining||0);state.taps=j.taps;state.mineDay=j.mineDay||dayKey();state.mineTaps=Number(j.dailyTaps ?? j.mineTaps ?? 0);state.todayEarned=(state.todayEarned||0)+j.reward;save();animateMine(j.reward)}catch(e){showToast(e.message)}}
 function animateMine(reward){
  const box=document.getElementById('mineBox'),c=document.getElementById('mineCircle');
@@ -182,10 +215,101 @@ async function rewardTask(id){const t=TASKS.find(x=>x.id===id);if(!t)return;cons
  const dailyClaimed=t.daily&&state.dailyClaimKey===dayKey();
  if((state.claimedTasks[id]&&!t.daily)||dailyClaimed){showToast('Already claimed');return}
  if(t.daily){try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.dailyClaimKey=j.dailyKey||dayKey();save();renderTasks();showToast('Daily +'+fmt(j.reward,2)+' NYD added')}catch(e){showToast(e.message)}return}
- if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){window.open(t.url,'_blank','noopener,noreferrer');setTimeout(async()=>{try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast(j.already?'Already claimed':'Verified & claimed +'+fmt(j.reward,2)+' NYD')}catch(e){showToast(e.message)}},1200);return}if(t.url)window.open(t.url,'_blank','noopener,noreferrer');try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
-function renderTasks(){const list=document.getElementById('taskList');if(!list)return;const arr=TASKS.filter(t=>currentFilter==='all'||t.cat===currentFilter);list.innerHTML=arr.map(t=>{const claimed=t.daily?state.dailyClaimKey===dayKey():!!state.claimedTasks[t.id];const blocked=t.profile&&!state.verified;const refBlocked=t.ref&&state.successfulReferrals<1;const label=claimed?'Claimed':blocked?'Verify':refBlocked?'Invite':t.telegram?'Verify & Claim':'Go';return `<div class="task ${claimed?'claimed':''}"><div class="task-icon">${t.icon}</div><div class="task-body"><strong>${t.name}</strong><span>${claimed?'Claimed':blocked?'Wallet verification required':refBlocked?'Requires 1 successful referral':'+'+fmt(Number(SERVER_TASKS[t.id]?.reward ?? t.reward),Number(SERVER_TASKS[t.id]?.reward ?? t.reward)%1?1:0)+' NYD'}</span></div><button class="${claimed?'done':'go'}" onclick="rewardTask('${t.id}')" ${claimed?'disabled':''}>${label}</button></div>`}).join('')}
+ if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){const st=TELEGRAM_TASK_STATUS[id]; if(st?.claimed && Date.now()<Number(st.nextAvailable||0)){showToast('Available again in '+timeLeft(st.nextAvailable));return} window.open(t.url,'_blank','noopener,noreferrer');setTimeout(async()=>{try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};TELEGRAM_TASK_STATUS[id]={claimed:true,nextAvailable:Number(j.nextAvailable||Date.now()+7200000)};save();renderTasks();showToast(j.already?'Already claimed':'Verified & claimed +'+fmt(j.reward,2)+' NYD')}catch(e){showToast(e.message)}},1500);return}if(t.url)window.open(t.url,'_blank','noopener,noreferrer');try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
+function timeLeft(ms){let x=Math.max(0,Number(ms||0)-Date.now());const h=Math.floor(x/3600000),m=Math.floor((x%3600000)/60000),sec=Math.floor((x%60000)/1000);return h?`${h}h ${m}m`:m?`${m}m ${sec}s`:`${sec}s`}
+function renderTasks(){const list=document.getElementById('taskList');if(!list)return;const arr=TASKS.filter(t=>currentFilter==='all'||t.cat===currentFilter);list.innerHTML=arr.map(t=>{const st=t.telegram?TELEGRAM_TASK_STATUS[t.id]:null;const claimed=t.daily?state.dailyClaimKey===dayKey():t.telegram?!!(st?.claimed&&Date.now()<Number(st.nextAvailable||0)):!!state.claimedTasks[t.id];const blocked=t.profile&&!state.verified;const refBlocked=t.ref&&state.successfulReferrals<1;const label=claimed?(t.telegram?'Again in '+timeLeft(st.nextAvailable):'Claimed'):blocked?'Verify':refBlocked?'Invite':t.telegram?'Verify & Claim':'Go';const reward=Number(SERVER_TASKS[t.id]?.reward ?? t.reward);return `<div class="task ${claimed?'claimed':''}"><div class="task-icon">${t.icon}</div><div class="task-body"><strong>${t.name}</strong><span>${claimed?(t.telegram?'Next claim: '+timeLeft(st.nextAvailable):'Claimed'):blocked?'Wallet verification required':refBlocked?'Requires 1 successful referral':'+'+fmt(reward,reward%1?1:0)+' NYD'}</span></div><button class="${claimed?'done':'go'}" onclick="rewardTask('${t.id}')">${label}</button></div>`}).join('')}
 function selectTab(btn){document.querySelectorAll('#taskTabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;renderTasks()}
-function renderMiners(){const l=document.getElementById('levels');if(!l)return;const current=state.level||1;document.getElementById('journeyTitle').textContent=`Level ${current} · Peak ${MAX_LEVEL}`;document.getElementById('peakText').textContent=`▽ ${Math.max(0,MAX_LEVEL-current)} levels remaining`;const shown=LEVELS.slice(0,Math.max(visibleLevelCount,current+5));l.innerHTML=shown.map(x=>{const active=x.level===current,unlocked=x.level<=current;return `<div class="level ${active?'active':''} ${unlocked?'':'locked'}"><div class="level-top">Lvl ${x.level}</div><div class="level-value">${x.reward.toFixed(4)}$</div><div class="level-speed">Speed <b>${x.speed.toFixed(2)} TH/s</b></div><button onclick="upgrade(${x.level})" ${active?'disabled':''}>${active?'ACTIVE':'⚡ PAY & UNLOCK'}</button>${!active?`<div class="cost">Unlock for ${x.cost.toLocaleString()} NYD value</div>`:''}</div>`}).join('');if(shown.length<MAX_LEVEL){l.insertAdjacentHTML('beforeend',`<button class="primary full" style="grid-column:1/-1" onclick="visibleLevelCount=Math.min(MAX_LEVEL,visibleLevelCount+40);renderMiners()">Show more levels (${shown.length}/${MAX_LEVEL})</button>`)} }
+let MINER_STATS={balance:0,totalWithdrawn:0,todayEarned:0,todayWithdrawn:0,todayPnl:0,price:.0005};
+let VIP_STATUS={active:false,priceUsdt:25,ratePerSecond:.100,address:DEPOSIT_ADDRESS}; let currentVipInvoice='';
+function setSvgSeries(lineId,dotsId,values,cls){
+ const line=document.getElementById(lineId), dots=document.getElementById(dotsId); if(!line||!dots)return;
+ const vals=values.map(v=>Math.max(0,Number(v)||0)); const max=Math.max(1,...vals), min=Math.min(0,...vals), range=Math.max(1,max-min);
+ const pts=vals.map((v,i)=>{const x=i*125;const y=145-((v-min)/range)*110;return [x,y]});
+ line.setAttribute('points',pts.map(p=>p.join(',')).join(' '));
+ dots.innerHTML=pts.map(p=>`<circle class="${cls}" cx="${p[0]}" cy="${p[1]}" r="4"></circle>`).join('');
+}
+function renderMinerStats(){
+ const s=MINER_STATS||{}; const bal=Number(s.balance||0), wd=Number(s.totalWithdrawn||0);
+ const pnl=Number(s.todayPnl||0), price=Number(s.price||.0005);
+ const b=document.getElementById('minerBalance'), w=document.getElementById('minerWithdrawn'), p=document.getElementById('minerPrice'), pnlEl=document.getElementById('pnl');
+ if(b)b.textContent=fmt(bal,4)+' NYD'; if(w)w.textContent=fmt(wd,4)+' NYD'; if(p)p.textContent='$'+price.toFixed(4);
+ if(pnlEl){pnlEl.textContent=(pnl>=0?'+':'')+fmt(pnl,4)+' NYD';pnlEl.className=pnl>=0?'green':'down'}
+ // Balance line and cumulative withdrawn line, normalized to the same visual range.
+ setSvgSeries('balanceLine','balanceDots',[0,bal*.25,bal*.5,bal*.75,bal],'pnl-dot-balance');
+ setSvgSeries('withdrawLine','withdrawDots',[0,wd*.25,wd*.5,wd*.75,wd],'pnl-dot-withdraw');
+}
+async function updateMinerStats(){
+ try{const j=await api('/miner-stats',{method:'POST',body:{}});MINER_STATS=j;renderMinerStats();}catch(e){renderMinerStats()}
+}
+
+function renderVipCard(){
+ const card=document.getElementById('vipMinerCard'); if(!card)return;
+ const badge=document.getElementById('vipBadge'), info=document.getElementById('vipInfo'), rate=document.getElementById('vipRate'), btn=document.getElementById('vipBuyBtn');
+ const active=!!VIP_STATUS.active, r=Number(VIP_STATUS.ratePerSecond||.1), price=Number(VIP_STATUS.priceUsdt||25);
+ if(active){
+   if(badge){badge.textContent='VIP ACTIVE';badge.className='peak green'}
+   if(info)info.innerHTML='Payment verified ✓ · <b>Auto Tap ON</b> · Auto Claim ON · Lifetime VIP';
+   if(rate)rate.textContent=fmt(r,3)+' NYD / second · '+fmt(r*60,3)+' NYD / minute';
+   if(btn){btn.textContent='👑 VIP ACTIVE · '+fmt(r,3)+' NYD/sec';btn.disabled=true;btn.style.opacity='.75'}
+ }else{
+   if(badge){badge.textContent='LOCKED';badge.className='peak'}
+   if(info)info.innerHTML='Unlock VIP for <b>$'+price.toFixed(2)+' USDT</b> on TON. Payment is verified on-chain before unlock.';
+   if(rate)rate.textContent=fmt(r,3)+' NYD / second · Auto mining + auto claim';
+   if(btn){btn.textContent='🔒 Buy VIP — $'+price.toFixed(2)+' USDT';btn.disabled=false;btn.style.opacity='1'}
+ }
+}
+function openVipPurchase(){
+ if(VIP_STATUS.active){showToast('VIP is already active');return}
+ if(!state.wallet||!state.verified){showToast('Connect and verify your TON wallet first');openScreen('profile');return}
+ document.getElementById('sheet').innerHTML=`<h3>👑 VIP Auto Miner</h3><p>One-time payment: <b>$25.00 USDT</b> on TON.</p><div class="card"><b>VIP Features</b><br>⚡ Auto Tap: 0.100 NYD/sec<br>🤖 Auto Claim: ON<br>🚀 High-speed smooth mining<br>♾️ Lifetime unlock after verified payment</div><div class="modal-actions"><button onclick="createVipPayment()">💳 Pay with USDT — $25</button><button class="secondary" onclick="closeModal()">Cancel</button></div>`;
+ document.getElementById('modal').classList.add('show');
+}
+async function createVipPayment(){
+ try{
+   const inv=await api('/vip/create',{method:'POST',body:{}});
+   if(inv.active){VIP_STATUS.active=true;state={...state,...inv.user};save();renderVipCard();closeModal();return}
+   currentVipInvoice=inv.invoice;
+   const qrData=encodeURIComponent(`TON USDT\nAddress: ${inv.recipient}\nAmount: ${Number(inv.amount).toFixed(2)} USDT\nInvoice: ${inv.invoice}`);
+   const qr=`https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${qrData}`;
+   document.getElementById('sheet').innerHTML=`<h3>👑 VIP Payment</h3><p style="text-align:center"><b>$${Number(inv.amount).toFixed(2)} USDT</b> on TON</p><div style="text-align:center;background:#fff;border-radius:14px;padding:10px;margin:10px auto;width:300px;max-width:90%"><img src="${qr}" alt="USDT TON payment QR" style="width:100%;max-width:280px;display:block;margin:auto"></div><div class="card" style="word-break:break-all;font-size:10px"><b>USDT TON address</b><br>${inv.recipient}<br><br><b>Exact amount</b><br>25.00 USDT</div><div class="modal-actions"><button onclick="payVipNow()">💳 Pay with Wallet</button><button class="secondary" onclick="copyVipAddress()">📋 Copy address</button><button class="secondary" onclick="checkVipPayment()">🔎 Check Payment</button><button class="secondary" onclick="closeModal()">Close</button></div><div id="vipPaymentStatus" class="subtitle" style="text-align:center;margin-top:10px">Waiting for $25 USDT payment…</div>`;
+   window.vipQrAddress=inv.recipient; document.getElementById('modal').classList.add('show');
+ }catch(e){showToast(e.message)}
+}
+function copyVipAddress(){if(window.vipQrAddress)navigator.clipboard?.writeText(window.vipQrAddress).then(()=>showToast('USDT address copied')).catch(()=>showToast('Copy failed'))}
+async function payVipNow(){
+ if(!currentVipInvoice)return;
+ const el=document.getElementById('vipPaymentStatus');
+ try{
+   const p=await api('/vip/details',{method:'POST',body:{invoice:currentVipInvoice}});
+   if(!p.payment)throw new Error('VIP payment invoice not found');
+   if(!window.tonConnectUI)throw new Error('TON Connect wallet is not ready. Reconnect your wallet.');
+   el.textContent='Opening wallet… approve exactly 25 USDT on TON.';
+   const tx=await api('/vip/transaction',{method:'POST',body:{invoice:currentVipInvoice}});
+   const request={validUntil:Math.floor(Date.now()/1000)+900,network:'-239',messages:[tx.message]};
+   await window.tonConnectUI.sendTransaction(request);
+   el.textContent='Payment sent. Waiting for blockchain confirmation…';
+   pollVipPayment(0);
+ }catch(e){if(el)el.textContent=e.message;showToast(e.message)}
+}
+async function pollVipPayment(n){
+ if(n>30)return;
+ await new Promise(r=>setTimeout(r,n?4000:2500));
+ try{
+   const j=await api('/vip/confirm',{method:'POST',body:{invoice:currentVipInvoice}});
+   if(j.confirmed){VIP_STATUS.active=true;state={...state,...j.user};save();const el=document.getElementById('vipPaymentStatus');if(el)el.textContent='Payment confirmed ✓ VIP unlocked!';showToast('👑 VIP activated — 0.100 NYD/sec auto mining');renderVipCard();setTimeout(closeModal,1000);return}
+ }catch(e){}
+ pollVipPayment(n+1)
+}
+async function checkVipPayment(){
+ if(!currentVipInvoice)return;
+ const el=document.getElementById('vipPaymentStatus');if(el)el.textContent='Checking blockchain…';
+ try{
+  const j=await api('/vip/confirm',{method:'POST',body:{invoice:currentVipInvoice}});
+  if(j.confirmed){VIP_STATUS.active=true;state={...state,...j.user};save();if(el)el.textContent='Payment confirmed ✓ VIP unlocked!';showToast('👑 VIP activated');renderVipCard();setTimeout(closeModal,700);return}
+  if(el)el.textContent='Payment not confirmed yet. Please wait and check again.'
+ }catch(e){if(el)el.textContent=e.message}
+}
+function renderMiners(){const l=document.getElementById('levels');if(!l)return;renderMinerStats();renderVipCard();const current=state.level||1;document.getElementById('journeyTitle').textContent=`Level ${current} · Peak ${MAX_LEVEL}`;document.getElementById('peakText').textContent=`▽ ${Math.max(0,MAX_LEVEL-current)} levels remaining`;const shown=LEVELS.slice(0,Math.max(visibleLevelCount,current+5));l.innerHTML=shown.map(x=>{const active=x.level===current,unlocked=x.level<=current;return `<div class="level ${active?'active':''} ${unlocked?'':'locked'}"><div class="level-top">Lvl ${x.level}</div><div class="level-value">${x.reward.toFixed(4)}$</div><div class="level-speed">Speed <b>${x.speed.toFixed(2)} TH/s</b></div><button onclick="upgrade(${x.level})" ${active?'disabled':''}>${active?'ACTIVE':'⚡ PAY & UNLOCK'}</button>${!active?`<div class="cost">Unlock for ${x.cost.toLocaleString()} NYD value</div>`:''}</div>`}).join('');if(shown.length<MAX_LEVEL){l.insertAdjacentHTML('beforeend',`<button class="primary full" style="grid-column:1/-1" onclick="visibleLevelCount=Math.min(MAX_LEVEL,visibleLevelCount+40);renderMiners()">Show more levels (${shown.length}/${MAX_LEVEL})</button>`)} }
 async function upgrade(level){
  const x=LEVELS[level-1];
  if(!x||level<2||level>MAX_LEVEL)return;
@@ -234,13 +358,24 @@ async function openHistory(){try{const j=await api('/history',{method:'POST',bod
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 function toggleSound(){state.sound=!state.sound;save();showToast(state.sound?'Sound effects enabled':'Sound effects muted')}
 function openDeposit(){const ton=PAYMENT_CONFIG.tonAddress||DEPOSIT_ADDRESS;const usdt=PAYMENT_CONFIG.usdtAddress||'';const q=usdt?'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(usdt):'';document.getElementById('sheet').innerHTML=`<h3>TON / USDT Payment Wallet</h3><p>Use the exact receiving address shown below. USDT is on TON Network.</p><div class="card"><b>TON receiving wallet</b><div style="word-break:break-all;font-size:10px;margin-top:6px">${ton}</div><button onclick="navigator.clipboard.writeText('${ton}');showToast('TON address copied')">Copy TON address</button></div><div class="card"><b>USDT receiving address</b>${usdt?`<div style="text-align:center;margin:10px 0"><img src="${q}" alt="USDT TON QR" style="width:190px;height:190px;border-radius:14px;background:#fff;padding:8px;max-width:100%"></div><div style="word-break:break-all;font-size:10px">${usdt}</div><button onclick="navigator.clipboard.writeText('${usdt}');showToast('USDT address copied')">Copy USDT address</button>`:'<div class="subtitle" style="margin-top:10px">USDT receiving address is not configured yet.</div>'}</div><div class="modal-actions"><button onclick="closeModal()">Close</button></div>`;document.getElementById('modal').classList.add('show')}
-async function updatePrice(){try{const r=await fetch(API+'/price',{headers:{'Accept':'application/json'}});const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error('Invalid price response')}if(!r.ok||!j)throw new Error('Empty price response');document.getElementById('livePrice').textContent='$'+Number(j.price).toFixed(4)}catch(e){document.getElementById('livePrice').textContent='$0.0010'}}
-function openScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));if(id==='tasks')renderTasks();if(id==='miners')renderMiners();if(id==='friends')renderFriends();if(id==='profile')renderProfile();window.scrollTo(0,0)}
+async function updatePrice(){try{const r=await fetch(API+'/price',{headers:{'Accept':'application/json'}});const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error('Invalid price response')}if(!r.ok||!j)throw new Error('Empty price response');document.getElementById('livePrice').textContent='$'+Number(j.price).toFixed(4)}catch(e){document.getElementById('livePrice').textContent='$0.0005'}}
+function openScreen(id){if(id==='miners')updateMinerStats();document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));if(id==='tasks')renderTasks();if(id==='miners')renderMiners();if(id==='friends')renderFriends();if(id==='profile')renderProfile();window.scrollTo(0,0)}
 function renderProfile(){document.getElementById('userId').textContent=state.telegramId||'Web Miner';document.getElementById('verifyStatus').textContent=state.verified?'Verified · '+shortAddr(state.wallet):'Unverified';document.getElementById('soundText').textContent=state.sound?'Enabled — tap to mute':'Muted — tap to enable';const st=document.getElementById('soundToggle');st.textContent=state.sound?'On':'Off';st.classList.toggle('on',state.sound);document.getElementById('assetUsd').textContent=fmt(state.balance,4)+' NYD';document.getElementById('assetValue').textContent='≈ $'+fmt(state.balance*0.001,6);document.getElementById('holdingWallet').textContent=state.wallet?shortAddr(state.wallet):'Not connected';document.getElementById('poolWallet').textContent=fmt(state.balance,4)+' NYD';document.getElementById('walletAddressShort').textContent=state.wallet?shortAddr(state.wallet):'Not connected';const b=document.getElementById('profileWalletBtn'),d=document.getElementById('profileDisconnectBtn');if(b)b.textContent=state.wallet?'Reconnect':'Connect';if(d)d.style.display=state.wallet?'inline-block':'none';document.getElementById('walletBtn').style.display=state.wallet?'none':'inline-block'}
 async function disconnectWallet(){try{if(window.tonConnectUI)await window.tonConnectUI.disconnect()}catch(e){}try{await api('/wallet/disconnect',{method:'POST',body:{}})}catch(e){}state.wallet='';state.walletType='';state.verified=false;save();renderTasks();showToast('Wallet disconnected. You can reconnect anytime.')}
-function render(){state.pendingMining=Number(state.pendingMining||0);document.getElementById('balance').textContent=fmt(state.balance,4);document.getElementById('taps').textContent=(state.taps||0).toLocaleString();document.getElementById('referrals').textContent=state.referrals||0;document.getElementById('todayEarned').textContent='+'+fmt(state.todayEarned,4);const rate=.01*(1+Math.max(0,(state.level||1)-1)*.02);document.getElementById('rateText').textContent='+'+fmt(rate,4)+'/tap';document.getElementById('tapRewardText').textContent='+'+fmt(rate,4)+' NYD per tap';const usedToday=state.mineDay===dayKey()?Math.max(0,Number(state.mineTaps||0)):0;document.getElementById('tapLimitText').textContent=`${Math.max(0,5000-usedToday)} taps left today`;const pc=document.getElementById('pendingClaim'),ca=document.getElementById('claimAmount'),cb=document.getElementById('mainClaimBtn');if(pc)pc.textContent='Pending claim: '+fmt(state.pendingMining,4)+' NYD';if(ca)ca.textContent=fmt(state.pendingMining,4);if(cb)cb.classList.toggle('ready',state.pendingMining>0);document.getElementById('rankBadge').textContent='♟ '+((state.level||1)<5?'Beginner':(state.level||1)<20?'Miner':'Pro Miner');document.getElementById('profileName').textContent=state.profileName||'NayaDost Miner';document.getElementById('profileHandle').textContent=state.handle||'@miner';document.getElementById('walletBtn').textContent='◈ Connect Wallet';renderProfile();renderFriends()}
+function render(){renderMinerStats();state.pendingMining=Number(state.pendingMining||0);document.getElementById('balance').textContent=fmt(state.balance,4);document.getElementById('taps').textContent=(state.taps||0).toLocaleString();document.getElementById('referrals').textContent=state.referrals||0;document.getElementById('todayEarned').textContent='+'+fmt(state.todayEarned,4);const rate=.01*(1+Math.max(0,(state.level||1)-1)*.02);document.getElementById('rateText').textContent='+'+fmt(rate,4)+'/tap';document.getElementById('tapRewardText').textContent='+'+fmt(rate,4)+' NYD per tap';const usedToday=state.mineDay===dayKey()?Math.max(0,Number(state.mineTaps||0)):0;document.getElementById('tapLimitText').textContent=`${Math.max(0,5000-usedToday)} taps left today`;const pc=document.getElementById('pendingClaim'),ca=document.getElementById('claimAmount'),cb=document.getElementById('mainClaimBtn');if(pc)pc.textContent='Pending claim: '+fmt(state.pendingMining,4)+' NYD';if(ca)ca.textContent=fmt(state.pendingMining,4);if(cb)cb.classList.toggle('ready',state.pendingMining>0);document.getElementById('rankBadge').textContent='♟ '+((state.level||1)<5?'Beginner':(state.level||1)<20?'Miner':'Pro Miner');document.getElementById('profileName').textContent=state.profileName||'NayaDost Miner';document.getElementById('profileHandle').textContent=state.handle||'@miner';document.getElementById('walletBtn').textContent='◈ Connect Wallet';renderProfile();renderFriends()}
 function initTelegram(){try{const tg=window.Telegram?.WebApp;if(!tg)return;tg.ready();tg.expand()}catch(e){}}
-window.addEventListener('load',async()=>{initTelegram();render();renderTasks();renderMiners();await bootstrap();await syncPendingLevelPayments();updatePrice();setInterval(updatePrice,30000);setInterval(syncPendingLevelPayments,15000);});
+let lastBootstrapAt=0;
+async function refreshFromServer(reason='refresh'){
+  const now=Date.now();
+  if(now-lastBootstrapAt<1200)return;
+  lastBootstrapAt=now;
+  await bootstrap();
+}
+window.addEventListener('load',async()=>{initTelegram();render();renderTasks();renderMiners();await refreshFromServer('load'); setInterval(()=>{if(Object.keys(TELEGRAM_TASK_STATUS).length){renderTasks()}},1000);await syncPendingLevelPayments();updatePrice();setInterval(updatePrice,30000);setInterval(syncPendingLevelPayments,15000);});
+// Telegram Mini Apps can be hidden when the user returns to Telegram and then shown again.
+// Re-read the authoritative SQLite balance/state whenever the app becomes visible again.
+window.addEventListener('pageshow',()=>{if(document.visibilityState==='visible')refreshFromServer('pageshow').catch(()=>{});});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshFromServer('visible').catch(()=>{});});
 </script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@3.0.2/dist/tonconnect-ui.min.js"></script>

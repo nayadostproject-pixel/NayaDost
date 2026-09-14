@@ -76,12 +76,32 @@ The defaults are usable for testing, but production should set the real receivin
 - User balance, pending mining, taps, referrals, task claims, wallet verification, deposits, withdrawals and withdrawal history are stored in SQLite.
 - The frontend always refreshes balance and today's mining count from the server on bootstrap; localStorage is only a UI cache.
 - Today's mining limit is exactly 5000 taps, server-enforced.
-- The two Telegram channel tasks are forced to `200 NYD` on startup, including existing databases.
+- The two Telegram channel tasks are forced to `100 NYD` on startup, including existing databases.
 
 
 ## Task reward and verification
-- The two Telegram channel tasks are stored server-side at 200 NYD each.
+- The two Telegram channel tasks are stored server-side at 100 NYD each and can be repeated every 2 hours.
 - Existing databases are migrated to 200 NYD at startup.
 - Telegram rewards are only credited after the backend verifies membership with Bot API getChatMember.
 - Configure EARN_CHANNEL_CHAT_ID and OFFICIAL_CHANNEL_CHAT_ID in production.
 - Withdrawal history is stored in SQLite and read from the server.
+
+
+### Balance persistence fix (important)
+- The SQLite database is the authoritative source for balance; browser localStorage is only a temporary UI cache.
+- The Mini App refreshes authoritative user state when it loads and whenever Telegram hides/shows the Mini App again.
+- Do not deploy this build to a Render service without a persistent disk mounted at `/var/data`; otherwise SQLite data can disappear after a service restart/redeploy.
+- If using Render Blueprint, sync/deploy `render.yaml`. If configuring the existing service manually, add a 1 GB persistent disk mounted at `/var/data` and set `DB_DIR=/var/data`.
+- Verify persistence after deployment by earning a small amount, closing/reopening the Mini App, and checking that the same server balance returns.
+
+
+### NYD price & Miner P&L
+NYD price is fixed at $0.0005 per NYD (1000 NYD = $0.50). Miner pack NYD costs/levels are unchanged. The Miner Store now shows saved current balance, total withdrawn, NYD price, and today's P&L with balance/withdrawal chart lines.
+
+
+## VIP Auto Miner
+- One-time VIP unlock: **$25 USDT on TON**.
+- VIP unlock is server-side and only activates after an on-chain USDT payment is verified.
+- VIP rate: **0.100 NYD per second** with automatic balance credit/claim.
+- VIP earnings continue while the user is away and are settled when the app/server processes the account.
+- VIP payment recipient uses `PAYMENT_USDT_ADDRESS` (defaults to the configured TON USDT receiving owner address).
