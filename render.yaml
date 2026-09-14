@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: nayadost-3
+    name: NayaDost-2
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: npm install
+    buildCommand: npm install --no-audit --no-fund
     startCommand: npm start
     envVars:
       - key: DB_DIR

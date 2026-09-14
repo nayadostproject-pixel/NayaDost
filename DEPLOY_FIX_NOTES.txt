@@ -1,0 +1,8 @@
+NayaDost deployment-only fix
+
+- Pins Node to 20.19.x.
+- Upgrades sqlite3 from 5.1.7 to 6.0.1 for current Render Node/N-API compatibility.
+- Pins runtime dependencies to known versions to avoid a fresh incompatible dependency resolution.
+- Keeps the existing server.js, public/index.html, wallet, mining, balance, referral and task logic unchanged.
+- Render start command remains: npm start
+- Persistent SQLite remains /var/data/naya_dost.sqlite when DB_DIR=/var/data.
