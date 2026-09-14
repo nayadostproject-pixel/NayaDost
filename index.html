@@ -53,8 +53,9 @@ button,input{font:inherit}button{border:0;cursor:pointer;color:#fff}button:disab
 .pnl-legend{display:flex;justify-content:center;gap:16px;font-size:9px;color:#a9b9d8;margin-top:5px}
 .pnl-legend span{display:inline-flex;align-items:center;gap:5px}.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
 </style>
+<style id="boot-style">#bootScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#010611;z-index:9999;color:#24dcff;font-weight:900;font-size:14px;letter-spacing:.5px}#bootScreen.hide{display:none}</style>
 </head>
-<body>
+<body><div id="bootScreen">⛏ NayaDost Mining…</div>
 <div class="app" id="app">
 <div id="toast" class="toast">Done</div>
 
@@ -132,7 +133,7 @@ button,input{font:inherit}button{border:0;cursor:pointer;color:#fff}button:disab
 <div class="profile-item" onclick="toggleSound()"><div class="pi">🔇</div><div class="pi-main"><strong>Sound effects</strong><span id="soundText">Muted — tap to enable</span></div><button class="toggle" id="soundToggle">Off</button></div>
 <div class="profile-item"><div class="pi">💰</div><div class="pi-main"><strong>Assets</strong><span id="assetUsd">0.0000 NYD</span></div><div class="value" id="assetValue">≈ $0.0000</div></div>
 <div class="profile-item"><div class="pi">💳</div><div class="pi-main"><strong>Holding Wallet</strong><span id="holdingWallet">0 NYD</span></div></div>
-<div class="profile-item"><div class="pi">🏦</div><div class="pi-main"><strong>Pool Wallet</strong><span>Withdrawable balance</span></div><div class="value" id="poolWallet">0.0000 NYD</div></div>
+<div class="profile-item"><div class="pi">🏦</div><div class="pi-main"><strong>Available Balance</strong><span>Withdrawable NYD after claim</span></div><div class="value" id="poolWallet">0.0000 NYD</div></div>
 </div>
 <div class="controls-title">Controls</div>
 <div class="profile-item"><div class="pi">↗</div><div class="pi-main"><strong>Withdraw</strong><span>Transfer Pool to Wallet</span></div><button class="copy" onclick="openWithdraw()">Withdraw</button></div>
@@ -166,7 +167,7 @@ const TASKS=[
  {id:'youtube',cat:'social',icon:'▶',name:'YouTube Like & Comment (Videos + Shorts)',reward:1,url:'https://www.youtube.com/'},
  {id:'earn_channel',cat:'telegram',icon:'✈',name:'NYD EARN PAYMENT CHANNEL — Join & Verify',reward:100,telegram:true,url:EARN_CHANNEL},
  {id:'official_channel',cat:'telegram',icon:'✈',name:'OFFICIAL CHANNEL — Join & Verify',reward:100,telegram:true,url:OFFICIAL_CHANNEL},
- {id:'x',cat:'social',icon:'𝕏',name:'Follow X @OfficialNayaDost',reward:100,url:'https://x.com/NayaDost_ton'},
+ {id:'x',cat:'social',icon:'𝕏',name:'Follow X @NayaDost_ton',reward:100,url:'https://x.com/NayaDost_ton'},
  {id:'site',cat:'other',icon:'🌐',name:'Visit Website (nydtoken.com)',reward:1,url:'https://nydtoken.com/'},
  {id:'react',cat:'social',icon:'🔥',name:'React to latest post (English)',reward:1,url:OFFICIAL_CHANNEL},
  {id:'daily',cat:'other',icon:'◷',name:'Daily Check-in',reward:5,daily:true},
@@ -189,9 +190,9 @@ window.getNayaDostApi=()=>API;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),1900);if(state.sound)beep(620,.05)}
 function beep(freq=520,dur=.06){if(!state.sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.035,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}catch(e){}}
 function playFx(type='tap'){if(!state.sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const now=audioCtx.currentTime;const seq=type==='claim'?[{f:523,d:.07,g:.045},{f:659,d:.08,g:.05},{f:784,d:.14,g:.055},{f:1047,d:.18,g:.04}]:type==='nav'?[{f:430,d:.045,g:.028},{f:620,d:.065,g:.032}]:[{f:700,d:.05,g:.03}];seq.forEach((x,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type==='claim'?'triangle':'sine';o.frequency.value=x.f;const t=now+i*.065;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(x.g,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+x.d);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+x.d+.02)})}catch(e){}}
-async function api(path,options={}){const u=tgUser();const method=(options.method||'GET').toUpperCase();const body=Object.assign({telegram_id:uid(),username:u?.username||'',first_name:u?.first_name||state.profileName,last_name:u?.last_name||'',referrer_code:window.Telegram?.WebApp?.initDataUnsafe?.start_param||''},options.body||{});const cfg={...options,method,headers:{'Content-Type':'application/json','X-Telegram-Init-Data':window.Telegram?.WebApp?.initData||'',...(options.headers||{})}};if(method!=='GET')cfg.body=JSON.stringify(body);else cfg.headers['X-Telegram-User']=JSON.stringify(body);const url=new URL(API+path,window.location.origin).toString();let r;try{r=await fetch(url,cfg)}catch(e){await new Promise(r=>setTimeout(r,250));try{r=await fetch(url,cfg)}catch(e2){throw new Error('NayaDost backend is not reachable. Refresh the Mini App and open it from the live NayaDost server.')}}const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error(`Backend returned invalid JSON (${r.status})`)}if(!j)throw new Error(`Backend returned an empty response (${r.status})`);if(!r.ok||j.ok===false)throw new Error(j.error||`Request failed (${r.status})`);return j}
+async function api(path,options={}){const u=tgUser();const method=(options.method||'GET').toUpperCase();const body=Object.assign({telegram_id:uid(),username:u?.username||'',first_name:u?.first_name||state.profileName,last_name:u?.last_name||'',referrer_code:window.Telegram?.WebApp?.initDataUnsafe?.start_param||''},options.body||{});const cfg={...options,method,headers:{'Content-Type':'application/json','X-Telegram-Init-Data':window.Telegram?.WebApp?.initData||'',...(options.headers||{})}};if(method!=='GET')cfg.body=JSON.stringify(body);else cfg.headers['X-Telegram-User']=JSON.stringify(body);const url=new URL(API+path,window.location.origin).toString();let r=null,lastErr=null;for(let attempt=0;attempt<3;attempt++){try{r=await fetch(url,{...cfg,signal:AbortSignal.timeout(7000)});break}catch(e){lastErr=e;if(attempt<2)await new Promise(x=>setTimeout(x,250*(attempt+1)))}}if(!r)throw new Error('NayaDost backend is not reachable. Please reopen the Mini App.');const text=await r.text();let j=null;try{j=text?JSON.parse(text):null}catch(e){throw new Error(`Backend returned invalid JSON (${r.status})`)}if(!j)throw new Error(`Backend returned an empty response (${r.status})`);if(!r.ok||j.ok===false)throw new Error(j.error||`Request failed (${r.status})`);return j}
 async function syncPendingLevelPayments(){try{const j=await api('/level-payments',{method:'POST',body:{}});for(const p of (j.rows||[]).filter(x=>x.status==='Pending').slice(0,3)){try{const c=await api('/level-payment/confirm',{method:'POST',body:{invoice:p.invoice}});if(c.confirmed){state={...state,...c.user,telegramId:c.user.id};save();showToast('Level '+c.level+' payment confirmed ✓');}}catch(e){}}renderMiners()}catch(e){}}
-async function bootstrap(){try{const u=tgUser();if(u){state.telegramId=String(u.id);state.profileName=[u.first_name,u.last_name].filter(Boolean).join(' ')||state.profileName;state.handle=u.username?'@'+u.username:state.handle}const j=await api('/bootstrap');state={...state,...j.user,telegramId:j.user.id,pendingMining:Number(j.user.pendingMining||0),mineDay:j.mineDay||dayKey(),mineTaps:Number(j.dailyTaps ?? j.mineTaps ?? 0),dailyClaimKey:j.dailyClaimed?dayKey():state.dailyClaimKey,inviteCode:j.user.referralCode||state.inviteCode};PAYMENT_CONFIG={...PAYMENT_CONFIG,...(j.payments||{})}; VIP_STATUS={active:!!j.user.vipActive,priceUsdt:Number(j.payments?.vipPriceUsdt||25),ratePerSecond:Number(j.payments?.vipRatePerSecond||.1),address:j.payments?.vipUsdtAddress||j.payments?.usdtAddress||DEPOSIT_ADDRESS}; state.claimedTasks={...(state.claimedTasks||{})};(j.claims||[]).forEach(x=>state.claimedTasks[x]=true);SERVER_TASKS={};(j.tasks||[]).forEach(x=>SERVER_TASKS[x.id]=x); TELEGRAM_TASK_STATUS=j.telegramTaskStatuses||{}; save();renderTasks();renderMiners();}catch(e){render();renderTasks();renderMiners();showToast('Offline mode: '+e.message)}}
+async function bootstrap(){try{const u=tgUser();if(u){state.telegramId=String(u.id);state.profileName=[u.first_name,u.last_name].filter(Boolean).join(' ')||state.profileName;state.handle=u.username?'@'+u.username:state.handle}const j=await api('/bootstrap');state={...state,...j.user,telegramId:j.user.id,pendingMining:Number(j.user.pendingMining||0),mineDay:j.mineDay||dayKey(),mineTaps:Number(j.dailyTaps ?? j.mineTaps ?? 0),dailyClaimKey:j.dailyClaimed?dayKey():state.dailyClaimKey,inviteCode:j.user.referralCode||state.inviteCode,profileName:[j.user.firstName,j.user.lastName].filter(Boolean).join(' ')||state.profileName,handle:j.user.username?'@'+j.user.username:state.handle};PAYMENT_CONFIG={...PAYMENT_CONFIG,...(j.payments||{})}; VIP_STATUS={active:!!j.user.vipActive,priceUsdt:Number(j.payments?.vipPriceUsdt||25),ratePerSecond:Number(j.payments?.vipRatePerSecond||.1),address:j.payments?.vipUsdtAddress||j.payments?.usdtAddress||DEPOSIT_ADDRESS}; state.claimedTasks={...(state.claimedTasks||{})};(j.claims||[]).forEach(x=>state.claimedTasks[x]=true);SERVER_TASKS={};(j.tasks||[]).forEach(x=>SERVER_TASKS[x.id]=x); TELEGRAM_TASK_STATUS=j.telegramTaskStatuses||{}; save();renderTasks();renderMiners();}catch(e){render();renderTasks();renderMiners();showToast('Offline mode: '+e.message)}}
 async function mine(){if((state.mineDay||dayKey())!==dayKey()){state.mineDay=dayKey();state.mineTaps=0}state.mineTaps=Math.max(0,Number(state.mineTaps||0));if(state.mineTaps>=5000){showToast('Daily 5000 taps reached');return}try{const j=await api('/mine',{method:'POST',body:{}});state.balance=j.balance;state.pendingMining=Number(j.pendingMining||0);state.taps=j.taps;state.mineDay=j.mineDay||dayKey();state.mineTaps=Number(j.dailyTaps ?? j.mineTaps ?? 0);state.todayEarned=(state.todayEarned||0)+j.reward;save();animateMine(j.reward)}catch(e){showToast(e.message)}}
 function animateMine(reward){
  const box=document.getElementById('mineBox'),c=document.getElementById('mineCircle');
@@ -203,9 +204,13 @@ function animateMine(reward){
  const f=document.createElement('div');f.className='float';f.textContent='+'+fmt(reward,4)+' NYD';f.style.left=(35+Math.random()*30)+'%';f.style.top='30%';
  box.appendChild(f);setTimeout(()=>f.remove(),800);beep(760,.08)
 }
+let claimBusy=false;
 async function claimMining(){
  const amount=Number(state.pendingMining||0);
+ if(claimBusy)return;
  if(amount<=0){showToast('No mined NYD available to claim');return}
+ claimBusy=true;
+ const btn=document.getElementById('mainClaimBtn');if(btn)btn.disabled=true;
  try{
   const j=await api('/claim',{method:'POST',body:{}});
   state={...state,...j.user,telegramId:j.user.id};save();renderTasks();playFx('claim');showToast('Claimed +'+fmt(j.claimed,4)+' NYD');
@@ -213,11 +218,21 @@ async function claimMining(){
 }
 
 
+function openTaskLink(url){
+ try{
+  const tg=window.Telegram?.WebApp;
+  if(tg?.openTelegramLink && /^https:\/\/t\.me\//i.test(url)){tg.openTelegramLink(url);return true}
+  if(tg?.openLink){tg.openLink(url,{try_instant_view:false});return true}
+  const w=window.open(url,'_blank','noopener,noreferrer');
+  if(w)return true;
+  location.href=url; return true;
+ }catch(e){try{location.href=url}catch(_){ } return false}
+}
 async function rewardTask(id){const t=TASKS.find(x=>x.id===id);if(!t)return;const serverTask=SERVER_TASKS[id];if(serverTask) t.reward=Number(serverTask.reward);
  const dailyClaimed=t.daily&&state.dailyClaimKey===dayKey();
  if((state.claimedTasks[id]&&!t.daily)||dailyClaimed){showToast('Already claimed');return}
  if(t.daily){try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.dailyClaimKey=j.dailyKey||dayKey();save();renderTasks();showToast('Daily +'+fmt(j.reward,2)+' NYD added')}catch(e){showToast(e.message)}return}
- if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){const st=TELEGRAM_TASK_STATUS[id]; if(st?.claimed && Date.now()<Number(st.nextAvailable||0)){showToast('Available again in '+timeLeft(st.nextAvailable));return} window.open(t.url,'_blank','noopener,noreferrer');setTimeout(async()=>{try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};TELEGRAM_TASK_STATUS[id]={claimed:true,nextAvailable:Number(j.nextAvailable||Date.now()+7200000)};save();renderTasks();showToast(j.already?'Already claimed':'Verified & claimed +'+fmt(j.reward,2)+' NYD')}catch(e){showToast(e.message)}},1500);return}if(t.url)window.open(t.url,'_blank','noopener,noreferrer');try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
+ if(t.profile&&!state.verified){showToast('Connect and verify wallet first');openScreen('profile');return}if(t.ref&&state.successfulReferrals<1){showToast('Invite 1 successful friend first');openScreen('friends');return}if(t.telegram){const st=TELEGRAM_TASK_STATUS[id]; if(st?.claimed && Date.now()<Number(st.nextAvailable||0)){showToast('Available again in '+timeLeft(st.nextAvailable));return} openTaskLink(t.url);setTimeout(async()=>{try{const j=await api('/tasks/telegram-verify',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};TELEGRAM_TASK_STATUS[id]={claimed:true,nextAvailable:Number(j.nextAvailable||Date.now()+7200000)};save();renderTasks();showToast(j.already?'Already claimed':'Verified & claimed +'+fmt(j.reward,2)+' NYD')}catch(e){showToast(e.message)}},1500);return}if(t.url)openTaskLink(t.url);try{const j=await api('/tasks/claim',{method:'POST',body:{task_id:id}});state={...state,...j.user,telegramId:j.user.id};state.claimedTasks[id]=true;save();showToast('+'+fmt(j.reward,2)+' NYD reward added')}catch(e){showToast(e.message)}}
 function timeLeft(ms){let x=Math.max(0,Number(ms||0)-Date.now());const h=Math.floor(x/3600000),m=Math.floor((x%3600000)/60000),sec=Math.floor((x%60000)/1000);return h?`${h}h ${m}m`:m?`${m}m ${sec}s`:`${sec}s`}
 function renderTasks(){const list=document.getElementById('taskList');if(!list)return;const arr=TASKS.filter(t=>currentFilter==='all'||t.cat===currentFilter);list.innerHTML=arr.map(t=>{const st=t.telegram?TELEGRAM_TASK_STATUS[t.id]:null;const claimed=t.daily?state.dailyClaimKey===dayKey():t.telegram?!!(st?.claimed&&Date.now()<Number(st.nextAvailable||0)):!!state.claimedTasks[t.id];const blocked=t.profile&&!state.verified;const refBlocked=t.ref&&state.successfulReferrals<1;const label=claimed?(t.telegram?'Again in '+timeLeft(st.nextAvailable):'Claimed'):blocked?'Verify':refBlocked?'Invite':t.telegram?'Verify & Claim':'Go';const reward=Number(SERVER_TASKS[t.id]?.reward ?? t.reward);return `<div class="task ${claimed?'claimed':''}"><div class="task-icon">${t.icon}</div><div class="task-body"><strong>${t.name}</strong><span>${claimed?(t.telegram?'Next claim: '+timeLeft(st.nextAvailable):'Claimed'):blocked?'Wallet verification required':refBlocked?'Requires 1 successful referral':'+'+fmt(reward,reward%1?1:0)+' NYD'}</span></div><button class="${claimed?'done':'go'}" onclick="rewardTask('${t.id}')">${label}</button></div>`}).join('')}
 function selectTab(btn){document.querySelectorAll('#taskTabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;renderTasks()}
@@ -373,14 +388,15 @@ async function refreshFromServer(reason='refresh'){
   lastBootstrapAt=now;
   await bootstrap();
 }
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('bootScreen')?.classList.add('hide')},{once:true});
 window.addEventListener('load',async()=>{initTelegram();render();renderTasks();renderMiners();await refreshFromServer('load'); setInterval(()=>{if(Object.keys(TELEGRAM_TASK_STATUS).length){renderTasks()}},1000);await syncPendingLevelPayments();updatePrice();setInterval(updatePrice,30000);setInterval(syncPendingLevelPayments,15000);});
 // Telegram Mini Apps can be hidden when the user returns to Telegram and then shown again.
 // Re-read the authoritative SQLite balance/state whenever the app becomes visible again.
 window.addEventListener('pageshow',()=>{if(document.visibilityState==='visible')refreshFromServer('pageshow').catch(()=>{});});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshFromServer('visible').catch(()=>{});});
 </script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://unpkg.com/@tonconnect/ui@3.0.2/dist/tonconnect-ui.min.js"></script>
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script>
+<script defer src="https://unpkg.com/@tonconnect/ui@3.0.2/dist/tonconnect-ui.min.js"></script>
 <script>
 (function(){
   try{

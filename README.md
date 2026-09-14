@@ -110,3 +110,25 @@ NYD price is fixed at $0.0005 per NYD (1000 NYD = $0.50). Miner pack NYD costs/l
 ## Twitter task
 - X account: @OfficialNayaDost
 - Profile: https://x.com/NayaDost_ton
+
+
+## Bug-fix build — 2026-09-14
+Fixed in this build:
+- 5000 daily taps is enforced consistently by frontend and backend.
+- Mining reward is stored in `pending_mining` and Claim moves it to `balance`.
+- X task uses `@NayaDost_ton` and `https://x.com/NayaDost_ton`.
+- Website task uses canonical id `site` (old `website` id is migrated).
+- Telegram/website links use Telegram Mini App link APIs with browser fallback.
+- Telegram first/last name and username are copied into the profile from server state.
+- Claim button is protected against double-clicks.
+- API calls retry and timeout instead of hanging indefinitely.
+- Startup has a visible loading screen instead of a blank black screen.
+- Pool Wallet is renamed to Available Balance to make claim/withdraw state clear.
+- VIP payment remains exactly 25.00 USDT on TON; level payments display server-calculated exact amounts.
+
+### Required Render environment for Telegram task verification
+`TELEGRAM_BOT_TOKEN` must be set. For each channel task, the bot must be able to call `getChatMember`.
+Set `EARN_CHANNEL_CHAT_ID` to the actual Telegram chat/channel id for the invite-only payment channel, and `OFFICIAL_CHANNEL_CHAT_ID` to the official channel id (or use a public `@username` channel). An invite URL alone cannot be used as a Bot API chat id.
+
+### Required payment environment
+Set `PAYMENT_USDT_ADDRESS` to the intended USDT-on-TON receiving wallet and keep `USDT_MASTER` set to the correct USDT jetton master.
