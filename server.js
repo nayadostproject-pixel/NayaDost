@@ -37,8 +37,6 @@ app.get('/tonconnect-manifest.json',(req,res)=>{
    iconUrl:base+'/icon-180.png'
  }));
 });
-app.use(express.static(path.join(__dirname, 'public')));
-
 const PORT = Number(process.env.PORT || 3000);
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'CHANGE_ME_NOW';
@@ -765,8 +763,9 @@ app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegra
 app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
 app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
-const webDir = fs.existsSync(path.join(__dirname,'public')) ? path.join(__dirname,'public') : __dirname;
-app.use((req,res,next)=>{if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
+const webDir = path.join(__dirname,'public');
+if (!fs.existsSync(webDir)) throw new Error('Required public directory missing: '+webDir);
+app.use((req,res,next)=>{res.setHeader('X-NYD-Build','VIP-TWITTER-100-PRICE-ONLY'); if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
 app.use(express.static(webDir,{etag:false,maxAge:0}));
 app.get('*',(req,res)=>res.sendFile(path.join(webDir,'index.html'),{headers:{'Cache-Control':'no-store, no-cache, must-revalidate, proxy-revalidate'}}));
 app.listen(PORT,()=>console.log(`NayaDost Mining running on http://localhost:${PORT}`));
