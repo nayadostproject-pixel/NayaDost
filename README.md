@@ -80,7 +80,7 @@ The defaults are usable for testing, but production should set the real receivin
 
 
 ## Task reward and verification
-- The two Telegram channel tasks are stored server-side at 100 NYD each and can be claimed again every 2 hours after membership verification.
+- The two Telegram channel tasks are stored server-side at 100 NYD each and can be repeated every 2 hours.
 - Existing databases are migrated to 200 NYD at startup.
 - Telegram rewards are only credited after the backend verifies membership with Bot API getChatMember.
 - Configure EARN_CHANNEL_CHAT_ID and OFFICIAL_CHANNEL_CHAT_ID in production.
@@ -108,14 +108,27 @@ NYD price is fixed at $0.0005 per NYD (1000 NYD = $0.50). Miner pack NYD costs/l
 
 
 ## Twitter task
-- X account: @NayaDost_ton
+- X account: @OfficialNayaDost
 - Profile: https://x.com/NayaDost_ton
 
 
-## SAFE BUG FIX BUILD — 2026-09-14
-- 5000 taps/day is enforced by one server-side `mine_daily` counter.
-- TON Connect initialization is ordered correctly; wallet library is loaded before wallet setup.
-- Telegram tasks use a Join → Verify & Claim two-step flow and 2-hour claim windows.
-- Unknown API routes return JSON 404 instead of HTML.
-- Persistent Render SQLite remains the source of truth for balances.
-- Referral counters are reconciled from stored referral relationships.
+## Bug-fix build — 2026-09-14
+Fixed in this build:
+- 5000 daily taps is enforced consistently by frontend and backend.
+- Mining reward is stored in `pending_mining` and Claim moves it to `balance`.
+- X task uses `@NayaDost_ton` and `https://x.com/NayaDost_ton`.
+- Website task uses canonical id `site` (old `website` id is migrated).
+- Telegram/website links use Telegram Mini App link APIs with browser fallback.
+- Telegram first/last name and username are copied into the profile from server state.
+- Claim button is protected against double-clicks.
+- API calls retry and timeout instead of hanging indefinitely.
+- Startup has a visible loading screen instead of a blank black screen.
+- Pool Wallet is renamed to Available Balance to make claim/withdraw state clear.
+- VIP payment remains exactly 25.00 USDT on TON; level payments display server-calculated exact amounts.
+
+### Required Render environment for Telegram task verification
+`TELEGRAM_BOT_TOKEN` must be set. For each channel task, the bot must be able to call `getChatMember`.
+Set `EARN_CHANNEL_CHAT_ID` to the actual Telegram chat/channel id for the invite-only payment channel, and `OFFICIAL_CHANNEL_CHAT_ID` to the official channel id (or use a public `@username` channel). An invite URL alone cannot be used as a Bot API chat id.
+
+### Required payment environment
+Set `PAYMENT_USDT_ADDRESS` to the intended USDT-on-TON receiving wallet and keep `USDT_MASTER` set to the correct USDT jetton master.

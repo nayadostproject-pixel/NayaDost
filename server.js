@@ -309,7 +309,7 @@ app.post('/api/bot/referral',async(req,res)=>{try{
  res.json({ok:true,user:publicUser(fresh)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
-app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); await settleVipUser(u.id); await reconcileReferralStats(); const freshUser=await get('SELECT * FROM users WHERE id=?',[u.id]); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const telegramStatuses={}; for(const tid of ['earn_channel','official_channel']){const cid=telegramClaimId(tid); const c=await get('SELECT id,claimed_at FROM task_claims WHERE user_id=? AND task_id=?',[u.id,cid]); telegramStatuses[tid]={claimed:!!c,nextAvailable:telegramNextAvailable(),cycle:telegramCycleKey()};} const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); const mineMeta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]); res.json({ok:true,user:publicUser(freshUser),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,mineDay:today,mineTaps:Number(mineMeta?.taps||0),dailyTaps:Number(mineMeta?.taps||0),serverTime:new Date().toISOString(),deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER,vipUsdtAddress:VIP_QR_ADDRESS,vipPriceUsdt:VIP_PRICE_USDT,vipRatePerSecond:VIP_RATE_PER_SECOND},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL},telegramTaskStatuses:telegramStatuses})}catch(e){res.status(400).json({ok:false,error:e.message})}});
+app.post('/api/bootstrap',async(req,res)=>{try{const u=await getUser(req.body); await settleVipUser(u.id); await reconcileReferralStats(); const freshUser=await get('SELECT * FROM users WHERE id=?',[u.id]); const tasks=await all('SELECT * FROM tasks WHERE active=1'); const claims=await all('SELECT task_id FROM task_claims WHERE user_id=?',[u.id]); const telegramStatuses={}; for(const tid of ['earn_channel','official_channel']) telegramStatuses[tid]=await telegramStatusForUser(u.id,tid); const today=new Date().toISOString().slice(0,10); const dailyClaim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,'daily:'+today]); const mineMeta=await get('SELECT taps FROM mine_daily WHERE user_id=? AND day=?',[u.id,today]); res.json({ok:true,user:publicUser(freshUser),tasks,claims:claims.map(x=>x.task_id),dailyClaimed:!!dailyClaim,mineDay:today,mineTaps:Number(mineMeta?.taps||0),dailyTaps:Number(mineMeta?.taps||0),serverTime:new Date().toISOString(),deposit:{address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'},payments:{tonAddress:PAYMENT_TON_ADDRESS,usdtAddress:PAYMENT_USDT_ADDRESS,usdtMaster:USDT_MASTER,vipUsdtAddress:VIP_QR_ADDRESS,vipPriceUsdt:VIP_PRICE_USDT,vipRatePerSecond:VIP_RATE_PER_SECOND},channels:{earn:EARN_CHANNEL,official:OFFICIAL_CHANNEL},telegramTaskStatuses:telegramStatuses})}catch(e){res.status(400).json({ok:false,error:e.message})}});
 
 app.post('/api/mine',async(req,res)=>{try{
  const u=await getUser(req.body);
@@ -406,6 +406,14 @@ function telegramCycleKey(){
 }
 function telegramClaimId(taskId){ return `${taskId}:2h:${telegramCycleKey()}`; }
 function telegramNextAvailable(){ return (telegramCycleKey()+1)*2*60*60*1000; }
+async function telegramStatusForUser(userId, taskId){
+ const row=await get(`SELECT claimed_at FROM task_claims WHERE user_id=? AND task_id LIKE ? ORDER BY id DESC LIMIT 1`,[userId,`${taskId}:2h:%`]);
+ if(!row) return {claimed:false,nextAvailable:0,cycle:telegramCycleKey()};
+ const claimedMs=Date.parse(String(row.claimed_at||'').replace(' ','T')+'Z');
+ const next=Number.isFinite(claimedMs)?claimedMs+(2*60*60*1000):0;
+ const available=next<=Date.now();
+ return {claimed:!available,nextAvailable:available?0:next,cycle:telegramCycleKey()};
+}
 
 async function verifyTelegramMembership(task, telegramId){
  const chatId=channelChatId(task);
@@ -424,20 +432,24 @@ app.post('/api/tasks/telegram-verify',async(req,res)=>{try{
  const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
  if(!task||task.type!=='telegram')throw new Error('Telegram task not found');
  const claimId=telegramClaimId(task.id);
- const claim=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,claimId]);
- if(claim)return res.json({ok:true,already:true,user:publicUser(u),reward:0,nextAvailable:telegramNextAvailable()});
+ const status=await telegramStatusForUser(u.id,task.id);
+ if(status.claimed)return res.json({ok:true,already:true,user:publicUser(u),reward:0,nextAvailable:status.nextAvailable});
  await verifyTelegramMembership(task,u.telegram_id);
  await run('BEGIN IMMEDIATE');
  try{
-   const again=await get('SELECT id FROM task_claims WHERE user_id=? AND task_id=?',[u.id,claimId]);
-   if(again){await run('ROLLBACK');return res.json({ok:true,already:true,user:publicUser(u),reward:0,nextAvailable:telegramNextAvailable()});}
+   const latest=await get(`SELECT claimed_at FROM task_claims WHERE user_id=? AND task_id LIKE ? ORDER BY id DESC LIMIT 1`,[u.id,`${task.id}:2h:%`]);
+   if(latest){
+     const claimedMs=Date.parse(String(latest.claimed_at||'').replace(' ','T')+'Z');
+     const next=Number.isFinite(claimedMs)?claimedMs+(2*60*60*1000):0;
+     if(next>Date.now()){await run('ROLLBACK');return res.json({ok:true,already:true,user:publicUser(u),reward:0,nextAvailable:next});}
+   }
    const claimRow=await run('INSERT INTO task_claims(user_id,task_id,claimed_at) VALUES(?,?,CURRENT_TIMESTAMP)',[u.id,claimId]);
    await run('UPDATE users SET balance=COALESCE(balance,0)+?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[task.reward,u.id]);
    await run('COMMIT');
    await distributeReferralRewards(u.id,'TASK:'+claimRow.lastID,task.reward);
  }catch(e){try{await run('ROLLBACK')}catch(_){} throw e;}
  const fresh=await get('SELECT * FROM users WHERE id=?',[u.id]);
- res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh),nextAvailable:telegramNextAvailable()});
+ res.json({ok:true,claimed:true,reward:task.reward,user:publicUser(fresh),nextAvailable:Date.now()+(2*60*60*1000)});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 app.post('/api/tasks/claim',async(req,res)=>{try{const u=await getUser(req.body);const task=await get('SELECT * FROM tasks WHERE id=? AND active=1',[req.body.task_id]);
 if(!task)throw new Error('Task not found');
@@ -763,13 +775,12 @@ app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegra
 app.post('/admin/withdraw/:id',admin,async(req,res)=>{const status=req.body.status;if(!['Approved','Rejected'].includes(status))return res.status(400).json({ok:false,error:'Invalid status'});const w=await get('SELECT * FROM withdrawals WHERE id=?',[req.params.id]);if(!w)return res.status(404).json({ok:false,error:'Not found'});if(w.status!=='Pending')return res.status(400).json({ok:false,error:'Already processed'});if(status==='Rejected')await run('UPDATE users SET balance=balance+? WHERE id=?',[w.amount,w.user_id]);await run('UPDATE withdrawals SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',[status,req.body.note||'',w.id]);res.json({ok:true})});
 app.get('/admin/deposit-address',admin,(req,res)=>res.json({ok:true,address:DEPOSIT_ADDRESS,network:'TON',asset:'USDT'}));
 
-// Never let an unknown /api request fall through to the HTML app shell.
-// This prevents the Mini App from receiving a 200 HTML page where JSON was expected.
-app.use('/api',(req,res)=>res.status(404).json({ok:false,error:'API endpoint not found'}));
-
 const webDir = path.join(__dirname,'public');
 if (!fs.existsSync(webDir)) throw new Error('Required public directory missing: '+webDir);
-app.use((req,res,next)=>{res.setHeader('X-NYD-Build','VIP-TWITTER-100-PRICE-ONLY'); if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
+// Never let an unknown /api route fall through to the SPA HTML shell.
+// The frontend expects JSON; this prevents the 'invalid JSON (200)' symptom.
+app.use('/api',(req,res)=>res.status(404).json({ok:false,error:'API endpoint not found',path:req.path}));
+app.use((req,res,next)=>{res.setHeader('X-NYD-Build','NYD-5000-WALLET-PERSISTENT-2H-REFERRAL-FIX'); if(req.path==='/'||req.path.endsWith('.html'))res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');next()});
 app.use(express.static(webDir,{etag:false,maxAge:0}));
 app.get('*',(req,res)=>res.sendFile(path.join(webDir,'index.html'),{headers:{'Cache-Control':'no-store, no-cache, must-revalidate, proxy-revalidate'}}));
 app.listen(PORT,()=>console.log(`NayaDost Mining running on http://localhost:${PORT}`));

@@ -1,17 +1,15 @@
-NayaDost SAFE BUG FIX BUILD — 2026-09-14
+NayaDost FINAL FIX
 
-1) Use this project root exactly as uploaded: package.json, server.js, public/index.html, public/icon-180.png, bot.py, render.yaml, etc.
-2) Render uses a Starter web service with a 1 GB persistent disk mounted at /var/data.
-3) DB_DIR=/var/data is set in render.yaml. User balances, pending mining, taps, referrals, tasks, wallet and payment records stay in SQLite.
-4) DO NOT change the Render service to Free if you need balance persistence.
-5) Mini App and API are same-origin: https://nayadost-3.onrender.com
-6) Daily mining limit is exactly 5000 taps. The server and UI both use the same daily counter.
-7) Mining goes into pending_mining; CLAIM moves it into balance.
-8) TON Connect scripts are loaded before the wallet initialization code. The previous defer timing bug is removed.
-9) Telegram channel tasks use a two-step flow: Join first, then tap Verify & Claim. Each Telegram task gets a new claim window every 2 hours.
-10) Private Telegram channels require EARN_CHANNEL_CHAT_ID / OFFICIAL_CHANNEL_CHAT_ID in Render because an invite URL cannot be used as a Bot API chat ID.
-11) Referral counts are reconciled from the actual referrer_code relationships on bootstrap.
-12) Unknown /api routes return JSON 404 instead of the HTML app shell, preventing "invalid JSON (200)" caused by an HTML response.
-13) Existing VIP miner/payment functionality from the stable build is preserved.
-14) The old stable package.json and tonconnect-manifest.json are included with the new files.
-15) Never put BOT_TOKEN, API keys, admin secrets or private keys in public/index.html.
+1) Render web service MUST use a paid plan with a persistent disk mounted at /var/data.
+2) Set DB_DIR=/var/data and DB_PATH=/var/data/naya_dost.sqlite.
+3) Set TELEGRAM_BOT_TOKEN to the SAME BotFather token used by @NayaDostMining_NYD_bot.
+4) Set APP_URL=https://nayadost-3.onrender.com and APP_DOMAIN=nayadost-3.onrender.com.
+5) For the two Telegram channel tasks, set EARN_CHANNEL_CHAT_ID and OFFICIAL_CHANNEL_CHAT_ID to the actual numeric chat IDs. The bot must be an admin/member able to call getChatMember.
+6) Set BOT_API_KEY to one long random secret. Use the SAME value in the bot service.
+7) Bot environment: BOT_TOKEN=<same BotFather token>, API_BASE_URL=https://nayadost-3.onrender.com, WEB_APP_URL=https://nayadost-3.onrender.com/, BOT_API_KEY=<same secret>.
+8) The bot.py in this package no longer keeps a separate users.json. The backend SQLite database is the single source of truth for user balance/referrals.
+9) Mining is server-enforced at 5000 taps/day and the UI reads today's count from the server.
+10) Both Telegram channel tasks are forced to 200 NYD, including existing DB rows.
+11) Withdrawal history, deposits, task claims, referrals, pending mining, balances, wallet verification and miner level/payment records are stored in SQLite.
+12) TON miner payment uses a valid TON Connect `messages` transaction. USDT miner payment builds the jetton transfer payload server-side and then checks blockchain confirmation before unlocking the level.
+13) Never put BOT_TOKEN, TONAPI keys or admin secrets into public/index.html.
