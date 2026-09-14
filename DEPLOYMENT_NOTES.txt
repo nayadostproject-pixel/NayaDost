@@ -13,3 +13,6 @@ NayaDost FINAL FIX
 11) Withdrawal history, deposits, task claims, referrals, pending mining, balances, wallet verification and miner level/payment records are stored in SQLite.
 12) TON miner payment uses a valid TON Connect `messages` transaction. USDT miner payment builds the jetton transfer payload server-side and then checks blockchain confirmation before unlocking the level.
 13) Never put BOT_TOKEN, TONAPI keys or admin secrets into public/index.html.
+
+
+SQLite compatibility fix: sqlite3 is pinned to 5.1.7 because sqlite3 6.0.1 prebuilt binary required GLIBC_2.38 on the Render runtime and caused ERR_DLOPEN_FAILED.
