@@ -15,7 +15,7 @@ app.set('trust proxy', 1);
 app.use(express.json({limit:'256kb'}));
 app.use(express.urlencoded({extended:true}));
 // Cross-origin support: the Mini App may be hosted on Netlify while this Node API
-// runs on Render/Railway/VPS. Telegram init-data headers must be explicitly allowed.
+// runs on Railway/VPS. Telegram init-data headers must be explicitly allowed.
 app.use((req,res,next)=>{
  res.setHeader('Access-Control-Allow-Origin','*');
  res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
@@ -70,10 +70,10 @@ const REFERRAL_RATES = String(process.env.REFERRAL_RATES || '5,3,2,1,0.5').split
 const REFERRAL_MAX_TOTAL = Math.max(0, Number(process.env.REFERRAL_MAX_TOTAL || 15));
 
 // Persistent SQLite storage.
-// On Render, /var/data must be backed by a paid persistent disk.
+// Railway persistent volume is mounted at /data in production; DB_DIR/DB_PATH can override it.
 // DB_DIR/DB_PATH can be set explicitly on other hosts.
 const localDataDir = path.join(__dirname, 'data');
-const persistentDataDir = process.env.DB_DIR || (process.env.RENDER ? '/var/data' : localDataDir);
+const persistentDataDir = process.env.DB_DIR || (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID ? '/data' : localDataDir);
 fs.mkdirSync(persistentDataDir, {recursive:true});
 const dbPath = process.env.DB_PATH || path.join(persistentDataDir,'naya_dost.sqlite');
 const db = new sqlite3.Database(dbPath);
@@ -418,7 +418,7 @@ async function telegramStatusForUser(userId, taskId){
 async function verifyTelegramMembership(task, telegramId){
  const chatId=channelChatId(task);
  if(!chatId){
-   throw new Error(`Channel verification is not configured for ${task.id}. Set ${task.id==='earn_channel'?'EARN_CHANNEL_CHAT_ID':'OFFICIAL_CHANNEL_CHAT_ID'} in Render.`);
+   throw new Error(`Channel verification is not configured for ${task.id}. Set ${task.id==='earn_channel'?'EARN_CHANNEL_CHAT_ID':'OFFICIAL_CHANNEL_CHAT_ID'} in the deployment environment.`);
  }
  const member=await telegramApi('getChatMember',{chat_id:chatId,user_id:telegramId});
  const status=String(member?.status||'');

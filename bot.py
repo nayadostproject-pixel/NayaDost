@@ -3,8 +3,8 @@ import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 
-WEB_APP_URL = os.getenv('WEB_APP_URL', 'https://nayadost-3.onrender.com/')
-API_BASE_URL = os.getenv('API_BASE_URL', 'https://nayadost-3.onrender.com').rstrip('/')
+WEB_APP_URL = os.getenv('WEB_APP_URL', 'http://localhost:3000/')
+API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:3000').rstrip('/')
 BOT_API_KEY = os.getenv('BOT_API_KEY', '')
 BOT_TOKEN = os.getenv('BOT_TOKEN', '')
 

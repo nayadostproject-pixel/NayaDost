@@ -1,0 +1,17 @@
+NayaDost Mining — Railway deployment
+
+1. Push/replace the project files in the GitHub repository connected to Railway.
+2. Railway detects the root Dockerfile and uses Node.js instead of Python.
+3. In the NayaDost service, add a Railway Volume mounted at /data.
+4. Set DB_DIR=/data. DB_PATH=/data/naya_dost.sqlite is also supported.
+5. Generate a public HTTPS domain in Service Settings > Networking.
+6. Set APP_URL=https://YOUR-RAILWAY-DOMAIN and APP_DOMAIN=YOUR-RAILWAY-DOMAIN.
+7. Set TELEGRAM_BOT_TOKEN plus the production secrets from .env.example.
+8. For the Telegram bot service, set WEB_APP_URL and API_BASE_URL to the generated Railway URL.
+
+The SQLite database is the authoritative source for user balances, mining, referrals,
+tasks, wallet verification, deposits, withdrawals and history. The /data Volume is
+required so this data survives restarts and redeployments.
+
+Health check: GET /api/health
+Port: Railway supplies PORT automatically.

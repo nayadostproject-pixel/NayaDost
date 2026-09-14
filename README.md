@@ -63,16 +63,16 @@ The old external/Netlify API override has been removed. The production app is in
 - The same normal TON owner address can receive both TON and USDT on TON. `PAYMENT_USDT_ADDRESS` defaults to `DEPOSIT_ADDRESS`; set it separately only if your USDT receiving owner address is different.
 - Mining reward is recalculated from the purchased miner level on the backend, so changing local JavaScript cannot increase mining rewards.
 
-### Render environment
+### Production environment
 The defaults are usable for testing, but production should set the real receiving address and NYD price source:
 `DEPOSIT_ADDRESS`, `PAYMENT_TON_ADDRESS`, `PAYMENT_USDT_ADDRESS`, `NYD_PRICE_FALLBACK` or `NYD_PRICE_API_URL`.
 `TONCENTER_API_KEY` is optional; the public TON Center v3 endpoint is rate-limited, so adding a key is recommended for a busy production app.
 
 
 ## Data persistence / balance protection
-- SQLite uses `DB_PATH` when set; otherwise on Render it uses `/var/data/naya_dost.sqlite`.
-- `render.yaml` uses a paid Render Starter web service with a 1 GB persistent disk mounted at `/var/data`.
-- This is required because Render Free web services do not provide a persistent disk for SQLite.
+- SQLite uses `DB_PATH` when set; otherwise on Railway it uses `/data/naya_dost.sqlite`.
+- `Dockerfile` uses a paid Railway Starter web service with a 1 GB persistent disk mounted at `/data`.
+- This is required because Railway Free web services do not provide a persistent disk for SQLite.
 - User balance, pending mining, taps, referrals, task claims, wallet verification, deposits, withdrawals and withdrawal history are stored in SQLite.
 - The frontend always refreshes balance and today's mining count from the server on bootstrap; localStorage is only a UI cache.
 - Today's mining limit is exactly 5000 taps, server-enforced.
@@ -90,8 +90,8 @@ The defaults are usable for testing, but production should set the real receivin
 ### Balance persistence fix (important)
 - The SQLite database is the authoritative source for balance; browser localStorage is only a temporary UI cache.
 - The Mini App refreshes authoritative user state when it loads and whenever Telegram hides/shows the Mini App again.
-- Do not deploy this build to a Render service without a persistent disk mounted at `/var/data`; otherwise SQLite data can disappear after a service restart/redeploy.
-- If using Render Blueprint, sync/deploy `render.yaml`. If configuring the existing service manually, add a 1 GB persistent disk mounted at `/var/data` and set `DB_DIR=/var/data`.
+- Do not deploy this build to a Railway service without a persistent disk mounted at `/data`; otherwise SQLite data can disappear after a service restart/redeploy.
+- If using Railway Blueprint, sync/deploy `Dockerfile`. If configuring the existing service manually, add a 1 GB persistent disk mounted at `/data` and set `DB_DIR=/data`.
 - Verify persistence after deployment by earning a small amount, closing/reopening the Mini App, and checking that the same server balance returns.
 
 
@@ -126,7 +126,7 @@ Fixed in this build:
 - Pool Wallet is renamed to Available Balance to make claim/withdraw state clear.
 - VIP payment remains exactly 25.00 USDT on TON; level payments display server-calculated exact amounts.
 
-### Required Render environment for Telegram task verification
+### Required Railway environment for Telegram task verification
 `TELEGRAM_BOT_TOKEN` must be set. For each channel task, the bot must be able to call `getChatMember`.
 Set `EARN_CHANNEL_CHAT_ID` to the actual Telegram chat/channel id for the invite-only payment channel, and `OFFICIAL_CHANNEL_CHAT_ID` to the official channel id (or use a public `@username` channel). An invite URL alone cannot be used as a Bot API chat id.
 
