@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: npm install --no-audit --no-fund
+    buildCommand: npm install --omit=dev --no-audit --no-fund
     startCommand: npm start
     envVars:
       - key: NODE_VERSION

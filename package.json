@@ -7,7 +7,7 @@
     "node": "20.19.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "sh start-render.sh"
   },
   "dependencies": {
     "dotenv": "16.4.7",
