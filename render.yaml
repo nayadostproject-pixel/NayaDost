@@ -7,6 +7,8 @@ services:
     buildCommand: npm install --no-audit --no-fund
     startCommand: npm start
     envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
       - key: DB_DIR
         value: /var/data
     autoDeployTrigger: commit
