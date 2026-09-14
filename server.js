@@ -46,9 +46,9 @@ const BOT_API_KEY = process.env.BOT_API_KEY || '';
 const OFFICIAL_CHANNEL = process.env.OFFICIAL_CHANNEL || '@NYDEarn_Official';
 const EARN_CHANNEL = process.env.EARN_CHANNEL || 'https://t.me/+9-jDg9aDMOphNzdl';
 const DEPOSIT_ADDRESS = process.env.DEPOSIT_ADDRESS || 'UQCx6kQYSADRJEjejFFttCNo12pjdquaOMhrXn8zYuF1wTvX';
-const PRICE_API_URL = process.env.NYD_PRICE_API_URL || '';
+const PRICE_API_URL = ''; // NYD price is fixed by product rules
 const TON_DEPOSIT_API_URL = process.env.TON_DEPOSIT_API_URL || '';
-const PRICE_FALLBACK = Number(process.env.NYD_PRICE_FALLBACK || 0.0005);
+const PRICE_FALLBACK = 0.0005; // 1000 NYD = 0.50 USD
 const APP_URL = String(process.env.APP_URL || '').replace(/\/$/, '');
 const APP_DOMAIN = String(process.env.APP_DOMAIN || '');
 const TON_NETWORK = String(process.env.TON_NETWORK || '-239');
@@ -108,10 +108,12 @@ db.serialize(()=>{
   ('official_channel','Official Channel — Join & Verify',100,'telegram',?),
   ('website','Visit Website (nydtoken.com)',1,'external',''),
   ('react','React to latest post (English)',1,'external',''),
+  ('x','Follow X @OfficialNayaDost',100,'external',''),
   ('daily','Daily Check-in',5,'daily','')`,[EARN_CHANNEL,OFFICIAL_CHANNEL]);
   // Migration: existing installations may already have the two Telegram tasks
   // with the old reward. Always force these two task rewards to 100 NYD.
   db.run("UPDATE tasks SET reward=100 WHERE id IN ('earn_channel','official_channel')");
+  db.run("UPDATE tasks SET reward=100 WHERE id='x'");
 });
 
 db.run('ALTER TABLE users ADD COLUMN referral_reward INTEGER DEFAULT 0',()=>{});
@@ -517,8 +519,7 @@ app.post('/api/level-payment/create',async(req,res)=>{try{
  if(!u.wallet_address||!u.verified)throw new Error('Connect and verify your TON wallet first');
  const target=levelDef(req.body.level);
  if(target.level<=Number(u.miner_level||1))throw new Error('This level is already unlocked');
- let price=PRICE_FALLBACK;
- if(PRICE_API_URL){try{const r=await fetch(PRICE_API_URL);const j=await r.json();const x=Number(j.price??j.usd??j.data?.price);if(Number.isFinite(x)&&x>0)price=x}catch{}}
+ const price=PRICE_FALLBACK;
  const amountUsdt=target.cost*price*LEVEL_PRICE_MULTIPLIER;
  if(!Number.isFinite(amountUsdt)||amountUsdt<=0)throw new Error('Invalid level payment amount');
  const asset=String(req.body.asset||'USDT').toUpperCase();
@@ -757,7 +758,7 @@ app.post('/api/miner-stats',async(req,res)=>{try{
  res.json({ok:true,price:PRICE_FALLBACK,balance:Number(freshVipUser.balance||0),totalWithdrawn:Number(totalWd?.amount||0),todayEarned,todayWithdrawn,todayPnl,rate,updatedAt:new Date().toISOString()});
 }catch(e){res.status(400).json({ok:false,error:e.message})}});
 
-app.get('/api/price',async(req,res)=>{let price=PRICE_FALLBACK,source='fallback';try{if(PRICE_API_URL){const r=await fetch(PRICE_API_URL);const j=await r.json(); const p=Number(j.price ?? j.usd ?? j.data?.price);if(Number.isFinite(p)&&p>0){price=p;source='configured-api'}}}catch{} await run('INSERT INTO price_history(price,source) VALUES(?,?)',[price,source]);res.json({ok:true,price,source,updatedAt:new Date().toISOString()})});
+app.get('/api/price',async(req,res)=>{const price=PRICE_FALLBACK;const source='fixed-product-price';await run('INSERT INTO price_history(price,source) VALUES(?,?)',[price,source]);res.json({ok:true,price,source,updatedAt:new Date().toISOString()})});
 
 function admin(req,res,next){if(req.headers['x-admin-key']!==ADMIN_KEY)return res.status(401).json({ok:false,error:'Unauthorized'});next()}
 app.get('/admin',admin,async(req,res)=>{const users=await all('SELECT id,telegram_id,username,referral_code,referrer_code,wallet_address,balance,verified,referrals,miner_level,created_at FROM users ORDER BY id DESC');const wd=await all('SELECT w.*,u.telegram_id,u.username FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC');res.json({ok:true,depositAddress:DEPOSIT_ADDRESS,users,withdrawals:wd})});

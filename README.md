@@ -105,3 +105,8 @@ NYD price is fixed at $0.0005 per NYD (1000 NYD = $0.50). Miner pack NYD costs/l
 - VIP rate: **0.100 NYD per second** with automatic balance credit/claim.
 - VIP earnings continue while the user is away and are settled when the app/server processes the account.
 - VIP payment recipient uses `PAYMENT_USDT_ADDRESS` (defaults to the configured TON USDT receiving owner address).
+
+
+## Twitter task
+- X account: @OfficialNayaDost
+- Profile: https://x.com/NayaDost_ton
